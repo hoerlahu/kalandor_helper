@@ -14,6 +14,11 @@
 
     importBtn.addEventListener('click', () => fileInput.click());
 
+    const whatToRollFeature = document.getElementById('whatToRollFeature');
+    whatToRollFeature.addEventListener('click', () => {
+        showMessage('This feature helps you find out what influences your rolls. Import a character first!', false);
+    });
+
     const exportBtn = document.getElementById('exportBtn');
     exportBtn.addEventListener('click', () => {
         if (!window._importedCharacter) {
