@@ -1,0 +1,108 @@
+{
+  "Allgemein": {
+    "Spezies": "Mensch",
+    "Alter": "27 Jahre",
+    "Augenfarbe": "grün",
+    "Haarfarbe": "braun",
+    "Größe": "1,78 m",
+    "Gewicht": "72 kg",
+    "Beruf": "Schmied",
+    "Disziplin": "Kampfkunst"
+  },
+  "Attribute": {
+    "Körperlich": {
+      "Stärke": 2,
+      "Beweglichkeit": 3,
+      "Robustheit": 1
+    },
+    "Intuitiv": {
+      "Intuition": 1,
+      "Charisma": 2,
+      "Glück": 0
+    },
+    "Geistig": {
+      "Wahrnehmung": 3,
+      "Geistesschärfe": 1,
+      "Willenskraft": 2
+    }
+  },
+  "Ausbildung": {
+    "Körperlich": {
+      "Athletik": 2,
+      "Fahren": 1,
+      "Fallen": 0,
+      "Fliegen": 0,
+      "Heimlichkeit": 1,
+      "Kochen": 3,
+      "Liebesspiel": 0,
+      "Medizin": 1,
+      "Reiten": 2,
+      "Schiffe (See/Luft)": 0,
+      "Schlösser knacken": 0,
+      "Werkstoffbearbeitung": 3,
+      "Ausweichen": 2
+    },
+    "Kampf": {
+      "Äxte": 3,
+      "Blitzschnelle Reflexe": 2,
+      "Bogenschießen": 1,
+      "Flegel/Keule": 0,
+      "Hieb/Stichwaffen": 2,
+      "Schildkampf": 1,
+      "Schusswaffen": 0,
+      "Schwere Waffen": 2,
+      "Stäbe": 0,
+      "Waffenlos": 1,
+      "Wurfwaffen": 0,
+      "Zwei Waffen": 1
+    },
+    "Sozial": {
+      "Aufmerksamkeit": 3,
+      "Charme": 2,
+      "Einschüchtern": 1,
+      "Empathie": 2,
+      "Etikette": 1,
+      "Führungsqualitäten": 0,
+      "Glücksspiel": 1,
+      "Navigation": 2,
+      "Orientierung": 3,
+      "Szenekenntnis": 1,
+      "Tierkunde": 0,
+      "Verhandeln": 2,
+      "Vorgaukeln": 0,
+      "Wildnisleben": 2
+    },
+    "Bildung": {
+      "Astronomie": 0,
+      "Aufbauwissenschaften": 1,
+      "Finanzen": 1,
+      "Geisteswissenschaften": 0,
+      "Gesetze": 0,
+      "Götter/Kulte": 0,
+      "Kartographie": 1,
+      "Kulturwissenschaften": 0,
+      "Linguistik": 0,
+      "Magietheorie": 0,
+      "Nachforschen": 1,
+      "Naturwissenschaften": 0,
+      "Pflanzenkunde": 2,
+      "Politik": 0,
+      "Schach": 0,
+      "Taktik": 1
+    }
+  },
+  "Disziplinen": {
+    "Disziplin 1": {
+      "Name": "Feuerzauber",
+      "Beschreibung": "Beherrscht einfache Feuerzauber und Flammenkontrolle."
+    },
+    "Disziplin 2": {
+      "Name": "Schmiedekunst",
+      "Beschreibung": "Experte im Schmieden von Waffen und Rüstungen."
+    },
+    "Disziplin 3": {
+      "Name": "Überleben",
+      "Beschreibung": "Versteht sich darauf, in der Wildnis zu überleben."
+    }
+  }
+}

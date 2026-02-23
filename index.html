@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalandor Character Manager</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>⚔️ Kalandor Character Manager</h1>
+        <p class="subtitle">Your companion for pen and paper adventures</p>
+        
+        <div class="features">
+            <div class="feature">
+                <h3>📊 Stat Tracking</h3>
+                <p>Manage and monitor all character statistics in one place</p>
+            </div>
+            <div class="feature">
+                <h3>🎒 Inventory</h3>
+                <p>Keep track of items, equipment, and resources</p>
+            </div>
+            <div class="feature">
+                <h3>🎲 Roll Mechanics</h3>
+                <p>Learn how stats influence your rolls and success chances</p>
+            </div>
+        </div>
+        
+        <div class="btn-group">
+            <button class="btn-primary" onclick="alert('Character creation coming soon!')">Create Character</button>
+            <button class="btn-secondary" onclick="alert('Tutorial coming soon!')">Learn More</button>
+            <button id="importBtn" class="btn-secondary">Import JSON</button>
+            <input id="fileInput" type="file" accept="application/JSON,.json" style="display:none" />
+        </div>
+
+        <div id="importResult" style="margin-top:20px; text-align:left;"></div>
+    </div>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
