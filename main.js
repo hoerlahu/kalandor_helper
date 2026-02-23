@@ -1,7 +1,41 @@
 (function(){
+    // default configuration – can be overridden by config.json
+    let config = {};
+
+    // try to load external config file automatically; no user action required
+    function loadConfig() {
+        return fetch('config.json')
+            .then(resp => {
+                if (!resp.ok) return null; // file not found or error
+                return resp.json();
+            })
+            .then(data => {
+                if (data) {
+                    // shallow merge – expand as needed
+                    config = { ...config, ...data };
+                }
+            })
+            .catch(() => {
+                // ignore failures – we'll just use defaults
+            });
+    }
+
+    // update UI strings based on configuration
+    // (no longer used; we simply display config contents for debugging)
+    function applyConfigToUI() {
+        // intentionally empty
+    }
+
     const importBtn = document.getElementById('importBtn');
     const fileInput = document.getElementById('fileInput');
     const importResult = document.getElementById('importResult');
+
+    // load configuration early and then show its contents
+    loadConfig().then(() => {
+        // show config in message area for visibility
+        showMessage('<pre style="text-align:left;white-space:pre-wrap;">' +
+            escapeHtml(JSON.stringify(config, null, 2)) + '</pre>', false);
+    });
 
     function showMessage(html, isError) {
         importResult.innerHTML =
