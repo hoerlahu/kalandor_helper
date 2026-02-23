@@ -14,6 +14,45 @@
 
     importBtn.addEventListener('click', () => fileInput.click());
 
+    const exportBtn = document.getElementById('exportBtn');
+    exportBtn.addEventListener('click', () => {
+        if (!window._importedCharacter) {
+            showMessage('No character data to export. Please import a character first.', true);
+            return;
+        }
+        
+        // get today's date in YYYY_MM_DD format
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        const dateStr = `${year}_${month}_${day}`;
+        
+        // extract character name from Allgemein section
+        const charName = (window._importedCharacter.Allgemein && window._importedCharacter.Allgemein.Name)
+            ? window._importedCharacter.Allgemein.Name
+            : 'Character';
+        
+        // sanitize filename (remove special characters)
+        const sanitizedName = charName.replace(/[<>:"/\\|?*]/g, '');
+        
+        // convert character data to JSON string with indentation
+        const jsonStr = JSON.stringify(window._importedCharacter, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        // create a temporary anchor element to trigger download
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `${dateStr} ${sanitizedName}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showMessage('Character exported successfully!', false);
+    });
+
     fileInput.addEventListener('change', (e) => {
         const target = e.target;
         const file = target.files && target.files[0];
