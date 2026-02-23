@@ -94,18 +94,9 @@
       }
     },
     "Disziplinen": {
-      "Disziplin 1": {
-        "Name": "Feuerzauber",
-        "Beschreibung": "Beherrscht einfache Feuerzauber und Flammenkontrolle."
-      },
-      "Disziplin 2": {
-        "Name": "Schmiedekunst",
-        "Beschreibung": "Experte im Schmieden von Waffen und Rüstungen."
-      },
-      "Disziplin 3": {
-        "Name": "Überleben",
-        "Beschreibung": "Versteht sich darauf, in der Wildnis zu überleben."
-      }
+      "Feuerzauber": 2,
+      "Schmiedekunst":1,
+      "Überleben": 3
     }
   } 
 }

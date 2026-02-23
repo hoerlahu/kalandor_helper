@@ -23,7 +23,7 @@
         
         const rollSelector = document.getElementById('rollSelector');
         const charData = window._importedCharacter;
-        const parentKeys = Object.keys(charData);
+        const parentKeys = Object.keys(charData).filter(k => k!=='Allgemein'); // exclude Allgemein section from roll selection
         
         // Create HTML for dropdowns
         let html = '<div style="padding:12px;border-radius:6px;background:#f1f8ff;border:1px solid #cfe6ff;">';
