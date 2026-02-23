@@ -54,23 +54,14 @@
             showMessage('This feature helps you find out what influences your rolls. Import a character first!', false);
             return;
         }
-        
+        const supportedRoll = 'Skills'; // we focus on Skills section for roll selection
         const rollSelector = document.getElementById('rollSelector');
         const charData = window._importedCharacter;
-        const parentKeys = Object.keys(charData).filter(k => k!=='Allgemein'); // exclude Allgemein section from roll selection
+        const parentKeys = Object.keys(charData).filter(k => k==supportedRoll); // exclude Allgemein and Attribute sections from roll selection
         
         // Create HTML for dropdowns
         let html = '<div style="padding:12px;border-radius:6px;background:#f1f8ff;border:1px solid #cfe6ff;">';
         html += '<h3>What do I roll?</h3>';
-        
-        // Parent dropdown
-        html += '<label style="display:block;margin-bottom:10px;"><strong>Category:</strong></label>';
-        html += '<select id="parentSelect" style="padding:8px;margin-bottom:15px;">';
-        html += '<option value="">Select a category...</option>';
-        parentKeys.forEach(key => {
-            html += '<option value="' + escapeHtml(key) + '">' + escapeHtml(key) + '</option>';
-        });
-        html += '</select>';
         
         // Child dropdown (hidden initially)
         html += '<label style="display:block;margin-bottom:10px;" id="childLabel"><strong>Property:</strong></label>';
@@ -96,7 +87,6 @@
         importResult.style.display = 'none';
         
         // Add event listeners
-        const parentSelect = document.getElementById('parentSelect');
         const childSelect = document.getElementById('childSelect');
         const childLabel = document.getElementById('childLabel');
         const grandchildSelect = document.getElementById('grandchildSelect');
@@ -105,41 +95,40 @@
         const greatgrandchildLabel = document.getElementById('greatgrandchildLabel');
         const rollResult = document.getElementById('rollResult');
         
-        parentSelect.addEventListener('change', () => {
-            const selectedParent = parentSelect.value;
-            rollResult.innerHTML = '';
-            
-            if (!selectedParent) {
-                childSelect.style.display = 'none';
-                childLabel.style.display = 'none';
-                grandchildSelect.style.display = 'none';
-                grandchildLabel.style.display = 'none';
-                greatgrandchildSelect.style.display = 'none';
-                greatgrandchildLabel.style.display = 'none';
-                return;
+        
+        const selectedParent = supportedRoll; // we focus on Skills section for roll selection
+        rollResult.innerHTML = '';
+        
+        if (!selectedParent) {
+            childSelect.style.display = 'none';
+            childLabel.style.display = 'none';
+            grandchildSelect.style.display = 'none';
+            grandchildLabel.style.display = 'none';
+            greatgrandchildSelect.style.display = 'none';
+            greatgrandchildLabel.style.display = 'none';
+            return;
+        }
+        
+        const parentData = charData[selectedParent];
+        const childKeys = Object.keys(parentData);
+        
+        childSelect.innerHTML = '<option value="">Select a property...</option>';
+        childKeys.forEach(key => {
+            const val = parentData[key];
+            let displayText = escapeHtml(key);
+            if (typeof val !== 'object' || val === null) {
+                displayText += ': ' + escapeHtml(String(val));
+            } else {
+                displayText += ' (Object)';
             }
-            
-            const parentData = charData[selectedParent];
-            const childKeys = Object.keys(parentData);
-            
-            childSelect.innerHTML = '<option value="">Select a property...</option>';
-            childKeys.forEach(key => {
-                const val = parentData[key];
-                let displayText = escapeHtml(key);
-                if (typeof val !== 'object' || val === null) {
-                    displayText += ': ' + escapeHtml(String(val));
-                } else {
-                    displayText += ' (Object)';
-                }
-                childSelect.innerHTML += '<option value="' + escapeHtml(key) + '">' + displayText + '</option>';
-            });
-            
-            childSelect.style.display = 'block';
-            childLabel.style.display = 'block';
+            childSelect.innerHTML += '<option value="' + escapeHtml(key) + '">' + displayText + '</option>';
         });
         
+        childSelect.style.display = 'block';
+        childLabel.style.display = 'block';
+        
+        
         childSelect.addEventListener('change', () => {
-            const selectedParent = parentSelect.value;
             const selectedChild = childSelect.value;
             rollResult.innerHTML = '';
             
@@ -173,7 +162,6 @@
         });
         
         grandchildSelect.addEventListener('change', () => {
-            const selectedParent = parentSelect.value;
             const selectedChild = childSelect.value;
             const selectedGrandchild = grandchildSelect.value;
             rollResult.innerHTML = '';
@@ -206,7 +194,6 @@
         });
         
         greatgrandchildSelect.addEventListener('change', () => {
-            const selectedParent = parentSelect.value;
             const selectedChild = childSelect.value;
             const selectedGrandchild = grandchildSelect.value;
             const selectedGreatgrandchild = greatgrandchildSelect.value;
@@ -321,18 +308,21 @@
     function displayRollInfo(level1, level2, level3, level4) {
         let roll = level1;
         if(!level1) return "No roll selected";
-        if(level2) roll = level1;
-        if(level3) roll = level2;
-        if(level4) roll = level3;
+        if(level2) roll = level2;
+        if(level3) roll = level3;
+        if(level4) roll = level4;
 
         if(config && config[roll]) {
             let output = "";
             config[roll].BasisWert.forEach(base => {
-                output += "Roll: " + roll + "<br>" +
+                
+                let overallValue = window._importedCharacter["Attribute"][base]+ window._importedCharacter[level1][level2][level3][level4] * config[roll].WertMultiplikator;
+
+                output += "<br>" +
                 "Base Attributes: " + base + "<br>" +
                 "10s Place Attributes: " + (config[roll]['10erStelle'] || []).join(', ') + "<br>" +
-                "Multiplier: " + (config[roll].WertMultiplikator.value || 1) + "<br>"+ 
-                "Gesamt: "+ (CharacterData[]) + "<br>";
+                "Multiplier: " + (config[roll].WertMultiplikator) + "<br>"+ 
+                "Gesamt: "+ overallValue + "<br>";
             });
             return output;
         } else {

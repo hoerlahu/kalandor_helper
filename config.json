@@ -1,7 +1,7 @@
 {
   "Athletik" : {
-    "BasisWert" : ["Beweglichkeit"],
-    "10erStelle": ["Intuition"],
+    "BasisWert" : ["Beweglichkeit", "Stärke"],
+    "10erStelle": false,
     "WertMultiplikator": 10
     }
 }
