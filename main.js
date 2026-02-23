@@ -166,7 +166,7 @@
                 grandchildLabel.style.display = 'block';
             } else {
                 // Leaf value reached
-                rollResult.innerHTML = '<strong>' + escapeHtml(selectedParent) + ' > ' + escapeHtml(selectedChild) + ':</strong> ' + escapeHtml(String(value));
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild) + '</strong>'
                 grandchildSelect.style.display = 'none';
                 grandchildLabel.style.display = 'none';
             }
@@ -199,7 +199,7 @@
                 greatgrandchildLabel.style.display = 'block';
             } else {
                 // Leaf value reached
-                rollResult.innerHTML = '<strong>' + escapeHtml(selectedParent) + ' > ' + escapeHtml(selectedChild) + ' > ' + escapeHtml(selectedGrandchild) + ':</strong> ' + escapeHtml(String(value));
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild) + '</strong>';
                 greatgrandchildSelect.style.display = 'none';
                 greatgrandchildLabel.style.display = 'none';
             }
@@ -217,7 +217,7 @@
             }
             
             const value = charData[selectedParent][selectedChild][selectedGrandchild][selectedGreatgrandchild];
-            rollResult.innerHTML = '<strong>' + escapeHtml(selectedParent) + ' > ' + escapeHtml(selectedChild) + ' > ' + escapeHtml(selectedGrandchild) + ' > ' + escapeHtml(selectedGreatgrandchild) + ':</strong> ' + escapeHtml(String(value));
+            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild,selectedGreatgrandchild) + '</strong>';
         });
     });
 
@@ -317,6 +317,28 @@
         // reset input so same file can be re-picked
         fileInput.value = '';
     });
+
+    function displayRollInfo(level1, level2, level3, level4) {
+        let roll = level1;
+        if(!level1) return "No roll selected";
+        if(level2) roll = level1;
+        if(level3) roll = level2;
+        if(level4) roll = level3;
+
+        if(config && config[roll]) {
+            let output = "";
+            config[roll].BasisWert.forEach(base => {
+                output += "Roll: " + roll + "<br>" +
+                "Base Attributes: " + base + "<br>" +
+                "10s Place Attributes: " + (config[roll]['10erStelle'] || []).join(', ') + "<br>" +
+                "Multiplier: " + (config[roll].WertMultiplikator.value || 1) + "<br>"+ 
+                "Gesamt: "+ (CharacterData[]) + "<br>";
+            });
+            return output;
+        } else {
+            return "No configuration found for roll: " + roll;
+        }
+    }
 
     function escapeHtml(s) {
         const entityMap = {

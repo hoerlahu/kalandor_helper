@@ -1,6 +1,7 @@
 {
-  "rollFeature": {
-    "title": "What do I roll123?",
-    "description": "Find out what influences your roll"
-  }
+  "Athletik" : {
+    "BasisWert" : ["Beweglichkeit"],
+    "10erStelle": ["Intuition"],
+    "WertMultiplikator": 10
+    }
 }
