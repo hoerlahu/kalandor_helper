@@ -13,11 +13,20 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         if (config && config[roll]) {
             let output = "";
             config[roll].BasisWert.forEach(base => {
-                let overallValue = window._importedCharacter["Attribute"][base] + window._importedCharacter[level1][level2][level3][level4] * config[roll].WertMultiplikator;
+                let overallValue = window._importedCharacter["Attribute"]["Basiswert"][base] + window._importedCharacter[level1][level2][level3][level4] * config[roll].WertMultiplikator;
+                
+                if(config[roll]['10erStelle']){
+                    overallValue += Math.floor(window._importedCharacter["Attribute"]["Basiswert"][base] / 10);
+                }
+                
+                if(config[roll]['BasisWertPunkteMultiplikator'] > 0){
+                    overallValue += window._importedCharacter["Attribute"]["Punkte"][base] * config[roll]['BasisWertPunkteMultiplikator'];
+                }
 
                 output += "<br>" +
                     "Base Attributes: " + base + "<br>" +
-                    "10s Place Attributes: " + (config[roll]['10erStelle'] || []).join(', ') + "<br>" +
+                    "10s Place Attributes: " + (config[roll]['10erStelle'] ? "Yes" : "No") + "<br>" +
+                    "PunkteMulti: " + (config[roll]['BasisWertPunkteMultiplikator']) + "<br>" +
                     "Multiplier: " + (config[roll].WertMultiplikator) + "<br>" +
                     "Gesamt: " + overallValue + "<br>";
             });

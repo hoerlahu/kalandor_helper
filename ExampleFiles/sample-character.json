@@ -11,6 +11,18 @@
     "Disziplin": "Kampfkunst"
   },
   "Attribute": {
+    "Basiswert":{
+      "Stärke": 54,
+      "Beweglichkeit": 73,
+      "Robustheit": 69,
+      "Intuition": 47,
+      "Charisma": 51,
+      "Glück": 62,
+      "Wahrnehmung": 74,
+      "Geistesschärfe": 58,
+      "Willenskraft": 80
+    },
+    "Punkte":{
       "Stärke": 2,
       "Beweglichkeit": 3,
       "Robustheit": 1,
@@ -20,6 +32,7 @@
       "Wahrnehmung": 3,
       "Geistesschärfe": 1,
       "Willenskraft": 2
+    }
   },
   "Skills": {
     "Ausbildung": {
