@@ -2,7 +2,7 @@ import { setupWhatToRollFeature } from './whatToRollFeature.js';
 import { setupImportExportFeature } from './importExportFeature.js';
 
 // default configuration – can be overridden by config.json
-let config = {};
+window._config = {};
 
     // try to load external config file automatically; no user action required
     function loadConfig() {
@@ -14,18 +14,12 @@ let config = {};
             .then(data => {
                 if (data) {
                     // shallow merge – expand as needed
-                    config = { ...config, ...data };
+                    window._config = { ...window._config, ...data };
                 }
             })
             .catch(() => {
                 // ignore failures – we'll just use defaults
             });
-    }
-
-    // update UI strings based on configuration
-    // (no longer used; we simply display config contents for debugging)
-    function applyConfigToUI() {
-        // intentionally empty
     }
 
     const importResult = document.getElementById('importResult');
@@ -34,7 +28,7 @@ let config = {};
     loadConfig().then(() => {
         // show config in message area for visibility
         showMessage('<pre style="text-align:left;white-space:pre-wrap;">' +
-            escapeHtml(JSON.stringify(config, null, 2)) + '</pre>', false);
+            escapeHtml(JSON.stringify(window._config, null, 2)) + '</pre>', false);
     });
 
     function showMessage(html, isError) {
@@ -48,30 +42,7 @@ let config = {};
 
     // import/export and file handling logic has been moved to importExportFeature.js
 
-    function displayRollInfo(level1, level2, level3, level4) {
-        let roll = level1;
-        if(!level1) return "No roll selected";
-        if(level2) roll = level2;
-        if(level3) roll = level3;
-        if(level4) roll = level4;
-
-        if(config && config[roll]) {
-            let output = "";
-            config[roll].BasisWert.forEach(base => {
-                
-                let overallValue = window._importedCharacter["Attribute"][base]+ window._importedCharacter[level1][level2][level3][level4] * config[roll].WertMultiplikator;
-
-                output += "<br>" +
-                "Base Attributes: " + base + "<br>" +
-                "10s Place Attributes: " + (config[roll]['10erStelle'] || []).join(', ') + "<br>" +
-                "Multiplier: " + (config[roll].WertMultiplikator) + "<br>"+ 
-                "Gesamt: "+ overallValue + "<br>";
-            });
-            return output;
-        } else {
-            return "No configuration found for roll: " + roll;
-        }
-    }
+// displayRollInfo has been moved into whatToRollFeature.js
 
     function escapeHtml(s) {
         const entityMap = {
@@ -87,5 +58,5 @@ let config = {};
     }
 
 // initialize extracted features after helpers are available
-setupWhatToRollFeature(showMessage, escapeHtml, displayRollInfo);
+setupWhatToRollFeature(showMessage, escapeHtml);
 setupImportExportFeature(showMessage, escapeHtml);

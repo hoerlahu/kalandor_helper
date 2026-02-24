@@ -1,4 +1,31 @@
-export function setupWhatToRollFeature(showMessage, escapeHtml, displayRollInfo) {
+export function setupWhatToRollFeature(showMessage, escapeHtml) {
+    // roll computation helper previously in main.js
+    function displayRollInfo(level1, level2, level3, level4) {
+        let roll = level1;
+        if (!level1) return "No roll selected";
+        if (level2) roll = level2;
+        if (level3) roll = level3;
+        if (level4) roll = level4;
+
+        let config = window._config;
+
+        // config object will be imported from main via closure later
+        if (config && config[roll]) {
+            let output = "";
+            config[roll].BasisWert.forEach(base => {
+                let overallValue = window._importedCharacter["Attribute"][base] + window._importedCharacter[level1][level2][level3][level4] * config[roll].WertMultiplikator;
+
+                output += "<br>" +
+                    "Base Attributes: " + base + "<br>" +
+                    "10s Place Attributes: " + (config[roll]['10erStelle'] || []).join(', ') + "<br>" +
+                    "Multiplier: " + (config[roll].WertMultiplikator) + "<br>" +
+                    "Gesamt: " + overallValue + "<br>";
+            });
+            return output;
+        } else {
+            return "No configuration found for roll: " + roll;
+        }
+    }
     const whatToRollFeature = document.getElementById('whatToRollFeature');
     if (!whatToRollFeature) return; // safety
 
