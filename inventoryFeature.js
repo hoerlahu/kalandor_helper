@@ -26,7 +26,6 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     <select id="itemSkillSelect" style="min-width:160px;"></select>
                     <input id="itemSkillNoteText" placeholder="Skill note" />
                     <input id="itemDesc" placeholder="Description" />
-                    <label style="display:inline-flex;align-items:center;gap:6px;margin-left:6px;"><input id="itemEquipped" type="checkbox" /> Equipped</label>
                     <button id="addItemBtn" class="btn-primary">Add</button>
                 </div>
             `;
@@ -44,7 +43,6 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
             const inName = panel.querySelector('#itemName');
             const inQty = panel.querySelector('#itemQty');
             const inDesc = panel.querySelector('#itemDesc');
-            const inEquipped = panel.querySelector('#itemEquipped');
             const inSkillSelect = panel.querySelector('#itemSkillSelect');
             const inSkillNote = panel.querySelector('#itemSkillNoteText');
 
@@ -91,15 +89,14 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     quantity: inQty.value ? inQty.value.trim() : '',
                     description: inDesc.value ? inDesc.value.trim() : '',
                     skill: inSkillSelect ? inSkillSelect.value : '',
-                    skillNote: inSkillNote ? inSkillNote.value.trim() : '',
-                    equipped: !!inEquipped.checked
+                    skillNote: inSkillNote ? inSkillNote.value.trim() : ''
                 };
 
                 const ul = renderManualList();
                 const li = document.createElement('li');
                 li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
                     (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
-                    (item.equipped ? ' <em>[equipped]</em>' : '') +
+                    '' +
                     (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
                     (item.skill ? '<div class="muted">Skill: ' + escapeHtml(item.skill) + (item.skillNote ? ' — ' + escapeHtml(item.skillNote) : '') + '</div>' : '');
 
@@ -117,13 +114,13 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 controls.appendChild(delBtn);
                 li.appendChild(controls);
 
-                // wire delete: remove from UI and importedCharacter if present
+        // wire delete: remove from UI and importedCharacter if present
                 delBtn.addEventListener('click', () => {
                     // remove from imported character array if exists
                     if (window._importedCharacter && Array.isArray(window._importedCharacter[inventoryKey])) {
                         const arr = window._importedCharacter[inventoryKey];
                         // find an entry matching name+quantity+description roughly
-                        const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
+            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
                         if (idx !== -1) arr.splice(idx, 1);
                         updateImportedInventoryDisplay();
                     }
@@ -135,7 +132,6 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     inName.value = item.name;
                     inQty.value = item.quantity || '';
                     inDesc.value = item.description || '';
-                    inEquipped.checked = !!item.equipped;
                     if (inSkillSelect) inSkillSelect.value = item.skill || '';
                     if (inSkillNote) inSkillNote.value = item.skillNote || '';
                     // remove existing entry from importedCharacter so re-adding updates it
@@ -154,7 +150,6 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 inName.value = '';
                 inQty.value = '';
                 inDesc.value = '';
-                inEquipped.checked = false;
                 if (inSkillSelect) inSkillSelect.selectedIndex = 0;
                 if (inSkillNote) inSkillNote.value = '';
                 // persist into imported character if present
@@ -168,8 +163,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                         quantity: item.quantity,
                         description: item.description,
                         skill: item.skill,
-                        skillNote: item.skillNote,
-                        equipped: item.equipped
+                        skillNote: item.skillNote
                     });
                     // refresh imported inventory display
                     updateImportedInventoryDisplay();
@@ -202,6 +196,14 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     const opt = document.createElement('option');
                     opt.value = sk;
                     opt.textContent = sk;
+                    inSkillSelect.appendChild(opt);
+                });
+                const attributes = charData.Attribute.Basiswert;
+                const attributeKeys = collectKeys(attributes);
+                attributeKeys.forEach(att => {
+                    const opt = document.createElement('option');
+                    opt.value = att;
+                    opt.textContent = att;
                     inSkillSelect.appendChild(opt);
                 });
             }
