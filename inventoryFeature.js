@@ -165,11 +165,11 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
 
         // wire delete: remove from UI and importedCharacter if present
                 delBtn.addEventListener('click', () => {
-                    // remove from imported character array if exists
-                    if (window._importedCharacter && Array.isArray(window._importedCharacter[inventoryKey])) {
-                        const arr = window._importedCharacter[inventoryKey];
+                    // remove from imported character inventory.items array if exists
+                    if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
+                        const arr = window._importedCharacter[inventoryKey].items;
                         // find an entry matching name+quantity+description roughly
-            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
+                        const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
                         if (idx !== -1) arr.splice(idx, 1);
                         updateImportedInventoryDisplay();
                     }
