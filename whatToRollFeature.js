@@ -13,8 +13,12 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         if (config && config[roll]) {
             let output = "";
             config[roll].BasisWert.forEach(base => {
-                let overallValue = window._importedCharacter["Attribute"]["Basiswert"][base] + window._importedCharacter[level1][level2][level3][level4] * config[roll].WertMultiplikator;
-                
+                let skillValue = 0;
+                if(level1 && level2 && level3 && level4){
+                    skillValue = window._importedCharacter[level1][level2][level3][level4] * config[roll].WertMultiplikator;
+                }
+                let overallValue = window._importedCharacter["Attribute"]["Basiswert"][base] + skillValue;
+
                 if(config[roll]['10erStelle']){
                     overallValue += Math.floor(window._importedCharacter["Attribute"]["Basiswert"][base] / 10);
                 }
@@ -99,12 +103,21 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         }
 
         const parentData = charData[selectedParent];
-        const childKeys = Object.keys(parentData);
+
+        // Get all skill keys, and add 'Absorbtion' if not present
+        let childKeys = Object.keys(parentData);
+        if (!childKeys.includes('Absorbtion')) {
+            childKeys.push('Absorbtion');
+        }
 
         childSelect.innerHTML = '<option value="">Select a property...</option>';
         childKeys.forEach(key => {
-            const val = parentData[key];
+            // For 'Absorbtion', treat as a leaf (number or 0)
             let displayText = escapeHtml(key);
+            let val = parentData[key];
+            if (key === 'Absorbtion' && (val === undefined || val === null)) {
+                val = 0;
+            }
             if (typeof val !== 'object' || val === null) {
                 displayText += ': ' + escapeHtml(String(val));
             } else {
@@ -142,8 +155,29 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 grandchildSelect.style.display = 'block';
                 grandchildLabel.style.display = 'block';
             } else {
+                let notesHtml = '';
+                let rollSkill = selectedChild;
+                if (window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
+                    const items = window._importedCharacter.inventory.items;
+                    let foundNotes = [];
+                    items.forEach(item => {
+                        if (Array.isArray(item.skillNotes)) {
+                            item.skillNotes.forEach(noteObj => {
+                                if (noteObj.skill === rollSkill && noteObj.note) {
+                                    foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + '</div>');
+                                }
+                            });
+                        }
+                    });
+                    if (foundNotes.length) {
+                        notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
+                    }
+                }
+
+
+
                 // Leaf value reached
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild) + '</strong>'
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild) + '</strong>' + notesHtml;
                 grandchildSelect.style.display = 'none';
                 grandchildLabel.style.display = 'none';
             }

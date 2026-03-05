@@ -123,6 +123,30 @@
               "note": "+5 auf alle Athletik-Würfe"
             }
           ]
+	    },
+      {   
+          "name": "absorber", 
+          "quantity": 1,
+          "description": "Test Item",
+         
+          "skillNotes": [
+            {
+              "skill": "Absorbtion",
+              "note": "+10 auf alle Absorbtion-Würfe, wenn der Charakter auf einem Bein steht"
+            }
+          ]
+	    },
+      {   
+          "name": "absorber2", 
+          "quantity": 1,
+          "description": "Test Item",
+         
+          "skillNotes": [
+            {
+              "skill": "Absorbtion",
+              "note": "+10 auf alle Absorbtion-Würfe, wenn der Charakter auf einem Bein steht"
+            }
+          ]
 	    }
     ]
   }

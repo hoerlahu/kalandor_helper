@@ -10,5 +10,17 @@
     "10erStelle": true,
     "BasisWertPunkteMultiplikator": 5,
     "WertMultiplikator": 10
+  },
+  "Absorbtion": {
+    "BasisWert": ["Robustheit"],
+    "10erStelle": false,
+    "BasisWertPunkteMultiplikator": 0,
+    "WertMultiplikator": 0
+  },
+  "Ausweichen": {
+    "BasisWert": ["Beweglichkeit"],
+    "10erStelle": false,
+    "BasisWertPunkteMultiplikator": 0,
+    "WertMultiplikator": 0
   }
 }
