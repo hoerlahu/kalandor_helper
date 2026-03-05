@@ -1,3 +1,125 @@
+.inventory-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-bottom: 10px;
+}
+.ia-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+.ia-row.ia-name input {
+    flex: 1;
+    font-size: 1.1em;
+    font-weight: 500;
+    padding: 8px;
+}
+.ia-row.ia-qty input {
+    width: 120px;
+    padding: 8px;
+}
+.ia-row.ia-skill-entry select {
+    flex: 1;
+    margin-right: 8px;
+    padding: 8px;
+}
+.ia-row.ia-skill-entry input {
+    flex: 2;
+    margin-right: 8px;
+    padding: 8px;
+}
+.ia-row.ia-skill-entry button {
+    flex: 0 0 auto;
+    padding: 8px 16px;
+}
+.skill-list {
+    margin-bottom: 10px;
+}
+.skill-list ul.skill-pairs {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.skill-list ul.skill-pairs li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    background: #f6f8fa;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+.ia-row.ia-desc input {
+    flex: 1;
+    padding: 8px;
+}
+.ia-row.ia-desc {
+    margin-bottom: 0;
+}
+.ia-row.ia-add {
+    margin-bottom: 0;
+    margin-top: 4px;
+}
+.ia-row.ia-add button {
+    width: 100%;
+    font-size: 1.08em;
+    padding: 10px 0;
+}
+.ia-row.ia-add {
+    margin-bottom: 0;
+    margin-top: 4px;
+}
+.ia-row.ia-add button {
+    width: 100%;
+    font-size: 1.08em;
+    padding: 10px 0;
+}
+.ia-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+.ia-row.ia-name input {
+    flex: 1;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+.ia-row.ia-qty input {
+    width: 120px;
+}
+.ia-row.ia-skill-entry select {
+    flex: 1;
+    margin-right: 8px;
+}
+.ia-row.ia-skill-entry input {
+    flex: 2;
+    margin-right: 8px;
+}
+.ia-row.ia-skill-entry button {
+    flex: 0 0 auto;
+}
+.skill-list {
+    margin-bottom: 10px;
+}
+.skill-list ul.skill-pairs {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+.skill-list ul.skill-pairs li {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+    background: #f6f8fa;
+    border-radius: 4px;
+    padding: 4px 8px;
+}
+.ia-row.ia-desc input {
+    flex: 1;
+}
+.ia-row.ia-desc button {
+    flex: 0 0 auto;
+}
 * {
     margin: 0;
     padding: 0;

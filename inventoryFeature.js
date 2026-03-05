@@ -21,12 +21,24 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     <p class="muted">Loading inventory...</p>
                 </div>
                 <div class="inventory-actions">
-                    <input id="itemName" placeholder="Name" />
-                    <input id="itemQty" placeholder="Quantity" style="width:80px;" />
-                    <select id="itemSkillSelect" style="min-width:160px;"></select>
-                    <input id="itemSkillNoteText" placeholder="Skill note" />
-                    <input id="itemDesc" placeholder="Description" />
-                    <button id="addItemBtn" class="btn-primary">Add</button>
+                    <div class="ia-row ia-name">
+                        <input id="itemName" placeholder="Name" />
+                    </div>
+                    <div class="ia-row ia-qty">
+                        <input id="itemQty" placeholder="Quantity" style="width:120px;" />
+                    </div>
+                    <div class="ia-row ia-skill-entry">
+                        <select id="itemSkillSelect" style="min-width:200px;"></select>
+                        <input id="itemSkillNoteText" placeholder="Skill note" />
+                        <button id="addSkillBtn" class="btn-secondary" type="button">Add Skill</button>
+                    </div>
+                    <div id="itemSkillList" class="skill-list"></div>
+                    <div class="ia-row ia-desc">
+                        <input id="itemDesc" placeholder="Description" style="flex:1; margin-right:8px;" />
+                    </div>
+                    <div class="ia-row ia-add">
+                        <button id="addItemBtn" class="btn-primary" style="width:100%;">Add</button>
+                    </div>
                 </div>
             `;
 
@@ -45,6 +57,43 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
             const inDesc = panel.querySelector('#itemDesc');
             const inSkillSelect = panel.querySelector('#itemSkillSelect');
             const inSkillNote = panel.querySelector('#itemSkillNoteText');
+            const addSkillBtn = panel.querySelector('#addSkillBtn');
+            const skillListDiv = panel.querySelector('#itemSkillList');
+            // in-memory list of {skill, note} pairs for the item being edited/created
+            let currentSkillPairs = [];
+
+            function renderSkillList() {
+                skillListDiv.innerHTML = '';
+                if (!currentSkillPairs || !currentSkillPairs.length) return;
+                const ul = document.createElement('ul');
+                ul.className = 'skill-pairs';
+                currentSkillPairs.forEach((p, idx) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = '<strong>' + escapeHtml(p.skill) + '</strong>' + (p.note ? ' — ' + escapeHtml(p.note) : '');
+                    const btn = document.createElement('button');
+                    btn.textContent = 'Remove';
+                    btn.className = 'btn-secondary';
+                    btn.style.marginLeft = '8px';
+                    btn.addEventListener('click', () => {
+                        currentSkillPairs.splice(idx, 1);
+                        renderSkillList();
+                    });
+                    li.appendChild(btn);
+                    ul.appendChild(li);
+                });
+                skillListDiv.appendChild(ul);
+            }
+
+            addSkillBtn.addEventListener('click', () => {
+                const sk = inSkillSelect && inSkillSelect.value;
+                const note = inSkillNote && inSkillNote.value && inSkillNote.value.trim();
+                if (!sk) return; // nothing selected
+                currentSkillPairs.push({ skill: sk, note: note || '' });
+                renderSkillList();
+                // clear note input
+                if (inSkillNote) inSkillNote.value = '';
+                if (inSkillSelect) inSkillSelect.selectedIndex = 0;
+            });
 
             // separate container for imported character inventory display
             const importedContainer = document.createElement('div');
@@ -198,7 +247,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     opt.textContent = sk;
                     inSkillSelect.appendChild(opt);
                 });
-                const attributes = charData.Attribute.Basiswert;
+                const attributes = charData.Attribute.Basiswert;                
                 const attributeKeys = collectKeys(attributes);
                 attributeKeys.forEach(att => {
                     const opt = document.createElement('option');
