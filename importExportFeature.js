@@ -88,8 +88,20 @@ export function setupImportExportFeature(showMessage, escapeHtml) {
                         html += '</ul>';
                         return html;
                     }
-                    const html = '<h2>Importierte Daten</h2>' + renderObj(data);
+                    // Add a button to clear the displayed JSON
+                    const clearBtnHtml = '<button id="clearImportResultBtn" class="btn-secondary" style="margin-bottom:10px;">Close</button>';
+                    const html = clearBtnHtml + '<h2>Importierte Daten</h2>' + renderObj(data);
                     showMessage(html, false);
+
+                    // Add event listener for the clear button
+                    setTimeout(() => {
+                        const clearBtn = document.getElementById('clearImportResultBtn');
+                        if (clearBtn) {
+                            clearBtn.addEventListener('click', () => {
+                                importResult.innerHTML = '';
+                            });
+                        }
+                    }, 0);
 
                     // store parsed object for later use
                     window._importedCharacter = data;
