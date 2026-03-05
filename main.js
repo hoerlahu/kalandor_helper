@@ -1,5 +1,6 @@
 import { setupWhatToRollFeature } from './whatToRollFeature.js';
 import { setupImportExportFeature } from './importExportFeature.js';
+import { setupInventoryFeature } from './inventoryFeature.js';
 
 // default configuration – can be overridden by config.json
 window._config = {};
@@ -61,18 +62,5 @@ window._config = {};
 setupWhatToRollFeature(showMessage, escapeHtml);
 setupImportExportFeature(showMessage, escapeHtml);
 
-document.addEventListener('DOMContentLoaded', () => {
-    const inv = document.getElementById('inventoryFeature');
-    const output = document.getElementById('importResult');
-    if (inv) {
-        inv.addEventListener('click', () => {
-            const msg = 'Inventory clicked — open the Inventory panel (coming soon).';
-            if (output) {
-                output.textContent = msg;
-                output.style.display = 'block';
-            } else {
-                alert(msg);
-            }
-        });
-    }
-});
+// initialize inventory feature
+setupInventoryFeature(showMessage, escapeHtml);
