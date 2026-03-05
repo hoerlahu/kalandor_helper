@@ -58,6 +58,20 @@ window._config = {};
         });
     }
 
+// Global debug flag
+window._debugMode = false;
+const debugToggle = document.getElementById('debugModeToggle');
+if (debugToggle) {
+    debugToggle.addEventListener('change', function() {
+        window._debugMode = this.checked;
+        if (window._debugMode) {
+            console.log('[DEBUG] Debug mode enabled');
+        } else {
+            console.log('[DEBUG] Debug mode disabled');
+        }
+    });
+}
+
 // initialize extracted features after helpers are available
 setupWhatToRollFeature(showMessage, escapeHtml);
 setupImportExportFeature(showMessage, escapeHtml);
