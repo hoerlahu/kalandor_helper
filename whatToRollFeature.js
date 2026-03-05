@@ -175,7 +175,26 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 greatgrandchildLabel.style.display = 'block';
             } else {
                 // Leaf value reached
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild) + '</strong>';
+                const rollSkill = selectedGrandchild;
+                let notesHtml = '';
+                // Search items for matching skillNotes
+                if (window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
+                    const items = window._importedCharacter.inventory.items;
+                    let foundNotes = [];
+                    items.forEach(item => {
+                        if (Array.isArray(item.skillNotes)) {
+                            item.skillNotes.forEach(noteObj => {
+                                if (noteObj.skill === rollSkill && noteObj.note) {
+                                    foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + '</div>');
+                                }
+                            });
+                        }
+                    });
+                    if (foundNotes.length) {
+                        notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
+                    }
+                }
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild) + '</strong>' + notesHtml;
                 greatgrandchildSelect.style.display = 'none';
                 greatgrandchildLabel.style.display = 'none';
             }
@@ -192,7 +211,25 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             }
 
             const value = charData[selectedParent][selectedChild][selectedGrandchild][selectedGreatgrandchild];
-            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild,selectedGreatgrandchild) + '</strong>';
+            const rollSkill = selectedGreatgrandchild;
+            let notesHtml = '';
+            if (window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
+                const items = window._importedCharacter.inventory.items;
+                let foundNotes = [];
+                items.forEach(item => {
+                    if (Array.isArray(item.skillNotes)) {
+                        item.skillNotes.forEach(noteObj => {
+                            if (noteObj.skill === rollSkill && noteObj.note) {
+                                foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + '</div>');
+                            }
+                        });
+                    }
+                });
+                if (foundNotes.length) {
+                    notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
+                }
+            }
+            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild,selectedGreatgrandchild) + '</strong>' + notesHtml;
         });
     });
 }

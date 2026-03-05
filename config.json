@@ -4,5 +4,11 @@
     "10erStelle": true,
     "BasisWertPunkteMultiplikator": 5,
     "WertMultiplikator": 10
+  },
+  "Fahren": {
+    "BasisWert": ["Geistesschärfe", "Beweglichkeit"],
+    "10erStelle": true,
+    "BasisWertPunkteMultiplikator": 5,
+    "WertMultiplikator": 10
   }
 }
