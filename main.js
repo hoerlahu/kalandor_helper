@@ -60,3 +60,19 @@ window._config = {};
 // initialize extracted features after helpers are available
 setupWhatToRollFeature(showMessage, escapeHtml);
 setupImportExportFeature(showMessage, escapeHtml);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const inv = document.getElementById('inventoryFeature');
+    const output = document.getElementById('importResult');
+    if (inv) {
+        inv.addEventListener('click', () => {
+            const msg = 'Inventory clicked — open the Inventory panel (coming soon).';
+            if (output) {
+                output.textContent = msg;
+                output.style.display = 'block';
+            } else {
+                alert(msg);
+            }
+        });
+    }
+});
