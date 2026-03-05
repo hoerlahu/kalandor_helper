@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Kalandor Character",
+  "type": "object",
+  "properties": {
+    "Allgemein": {
+      "type": "object",
+      "properties": {
+        "Name": { "type": "string" },
+        "Spezies": { "type": "string" },
+        "Alter": { "type": "string" },
+        "Augenfarbe": { "type": "string" },
+        "Haarfarbe": { "type": "string" },
+        "Größe": { "type": "string" },
+        "Gewicht": { "type": "string" },
+        "Beruf": { "type": "string" },
+        "Disziplin": { "type": "string" }
+      },
+      "required": ["Name", "Spezies", "Alter", "Augenfarbe", "Haarfarbe", "Größe", "Gewicht", "Beruf", "Disziplin"]
+    },
+    "Attribute": {
+      "type": "object",
+      "properties": {
+        "Basiswert": {
+          "type": "object",
+          "properties": {
+            "Stärke": { "type": "integer" },
+            "Beweglichkeit": { "type": "integer" },
+            "Robustheit": { "type": "integer" },
+            "Intuition": { "type": "integer" },
+            "Charisma": { "type": "integer" },
+            "Glück": { "type": "integer" },
+            "Wahrnehmung": { "type": "integer" },
+            "Geistesschärfe": { "type": "integer" },
+            "Willenskraft": { "type": "integer" }
+          },
+          "required": ["Stärke", "Beweglichkeit", "Robustheit", "Intuition", "Charisma", "Glück", "Wahrnehmung", "Geistesschärfe", "Willenskraft"]
+        },
+        "Punkte": {
+          "type": "object",
+          "properties": {
+            "Stärke": { "type": "integer" },
+            "Beweglichkeit": { "type": "integer" },
+            "Robustheit": { "type": "integer" },
+            "Intuition": { "type": "integer" },
+            "Charisma": { "type": "integer" },
+            "Glück": { "type": "integer" },
+            "Wahrnehmung": { "type": "integer" },
+            "Geistesschärfe": { "type": "integer" },
+            "Willenskraft": { "type": "integer" }
+          },
+          "required": ["Stärke", "Beweglichkeit", "Robustheit", "Intuition", "Charisma", "Glück", "Wahrnehmung", "Geistesschärfe", "Willenskraft"]
+        }
+      },
+      "required": ["Basiswert", "Punkte"]
+    },
+    "Skills": {
+      "type": "object",
+      "properties": {
+        "Ausbildung": {
+          "type": "object",
+          "properties": {
+            "Körperlich": { "type": "object", "additionalProperties": { "type": "integer" } },
+            "Kampf": { "type": "object", "additionalProperties": { "type": "integer" } },
+            "Sozial": { "type": "object", "additionalProperties": { "type": "integer" } },
+            "Bildung": { "type": "object", "additionalProperties": { "type": "integer" } }
+          },
+          "required": ["Körperlich", "Kampf", "Sozial", "Bildung"]
+        },
+        "Disziplinen": {
+          "type": "object",
+          "additionalProperties": { "type": "integer" }
+        }
+      },
+      "required": ["Ausbildung", "Disziplinen"]
+    },
+    "inventory": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "quantity": { "type": "integer" },
+              "description": { "type": "string" },
+              "skillNotes": {
+                "type": "array",
+                "additionalProperties": { "type": "string" }
+              }
+            },
+            "required": ["name", "quantity", "description", "skillNotes"]
+          }
+        }
+      },
+      "required": ["items"]
+    }
+  },
+  "required": ["Allgemein", "Attribute", "Skills", "inventory"]
+}
