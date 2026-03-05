@@ -3,24 +3,35 @@
     "BasisWert" : ["Beweglichkeit", "Stärke"],
     "10erStelle": true,
     "BasisWertPunkteMultiplikator": 5,
-    "WertMultiplikator": 10
+    "WertMultiplikator": 10,
+    "MetaSkill": false
   },
   "Fahren": {
     "BasisWert": ["Geistesschärfe", "Beweglichkeit"],
     "10erStelle": true,
     "BasisWertPunkteMultiplikator": 5,
-    "WertMultiplikator": 10
+    "WertMultiplikator": 10,
+    "MetaSkill": false
   },
   "Absorbtion": {
     "BasisWert": ["Robustheit"],
     "10erStelle": false,
     "BasisWertPunkteMultiplikator": 0,
-    "WertMultiplikator": 0
+    "WertMultiplikator": 0,
+    "MetaSkill": false
   },
   "Ausweichen": {
     "BasisWert": ["Beweglichkeit"],
     "10erStelle": false,
     "BasisWertPunkteMultiplikator": 0,
-    "WertMultiplikator": 0
+    "WertMultiplikator": 0,
+    "MetaSkill": true
+  },
+  "KasperlesTheater": {
+    "BasisWert": ["Beweglichkeit"],
+    "10erStelle": false,
+    "BasisWertPunkteMultiplikator": 0,
+    "WertMultiplikator": 0,
+    "MetaSkill": true
   }
 }

@@ -106,16 +106,33 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
         // Get all skill keys, and add 'Absorbtion' if not present
         let childKeys = Object.keys(parentData);
-        if (!childKeys.includes('Absorbtion')) {
-            childKeys.push('Absorbtion');
+        // Add general skills from config if not present
+        let generalSkills = [];
+        if (window._config) {
+            // Add skills from generalSkills array
+            if (Array.isArray(window._config.generalSkills)) {
+                generalSkills = window._config.generalSkills.slice();
+            }
+            // Add any skill with MetaSkill: true
+            Object.keys(window._config).forEach(k => {
+                const v = window._config[k];
+                if (typeof v === 'object' && v.MetaSkill === true && !generalSkills.includes(k)) {
+                    generalSkills.push(k);
+                }
+            });
         }
+        generalSkills.forEach(skill => {
+            if (!childKeys.includes(skill)) {
+                childKeys.push(skill);
+            }
+        });
 
         childSelect.innerHTML = '<option value="">Select a property...</option>';
         childKeys.forEach(key => {
-            // For 'Absorbtion', treat as a leaf (number or 0)
+            // For general skills, treat as a leaf (number or 0)
             let displayText = escapeHtml(key);
             let val = parentData[key];
-            if (key === 'Absorbtion' && (val === undefined || val === null)) {
+            if (generalSkills.includes(key) && (val === undefined || val === null)) {
                 val = 0;
             }
             if (typeof val !== 'object' || val === null) {
