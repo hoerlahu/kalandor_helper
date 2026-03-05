@@ -88,7 +88,9 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 const sk = inSkillSelect && inSkillSelect.value;
                 const note = inSkillNote && inSkillNote.value && inSkillNote.value.trim();
                 if (!sk) return; // nothing selected
-                currentSkillPairs.push({ skill: sk, note: note || '' });
+                // Only keep the lowest node of the skill path
+                const lowestSkill = sk.includes('>') ? sk.split('>').pop().trim() : sk.trim();
+                currentSkillPairs.push({ skill: lowestSkill, note: note || '' });
                 renderSkillList();
                 // clear note input
                 if (inSkillNote) inSkillNote.value = '';
