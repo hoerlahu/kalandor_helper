@@ -137,17 +137,15 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     name: name,
                     quantity: inQty.value ? inQty.value.trim() : '',
                     description: inDesc.value ? inDesc.value.trim() : '',
-                    skill: inSkillSelect ? inSkillSelect.value : '',
-                    skillNote: inSkillNote ? inSkillNote.value.trim() : ''
+                    skills: Array.isArray(currentSkillPairs) ? currentSkillPairs.slice() : []
                 };
 
                 const ul = renderManualList();
                 const li = document.createElement('li');
                 li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
                     (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
-                    '' +
                     (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
-                    (item.skill ? '<div class="muted">Skill: ' + escapeHtml(item.skill) + (item.skillNote ? ' — ' + escapeHtml(item.skillNote) : '') + '</div>' : '');
+                    (item.skills && item.skills.length ? '<div class="muted">' + item.skills.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
 
                 // add controls
                 const controls = document.createElement('span');
@@ -201,18 +199,23 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 inDesc.value = '';
                 if (inSkillSelect) inSkillSelect.selectedIndex = 0;
                 if (inSkillNote) inSkillNote.value = '';
+                // clear all skills/notes for next item
+                currentSkillPairs = [];
+                renderSkillList();
                 // persist into imported character if present
                 if (window._importedCharacter) {
-                    if (!(inventoryKey in window._importedCharacter) || !Array.isArray(window._importedCharacter[inventoryKey])) {
-                        // create as array
-                        window._importedCharacter[inventoryKey] = [];
+                    // Always use inventory.items array for storing items
+                    if (!window._importedCharacter[inventoryKey]) {
+                        window._importedCharacter[inventoryKey] = {};
                     }
-                    window._importedCharacter[inventoryKey].push({
+                    if (!Array.isArray(window._importedCharacter[inventoryKey].items)) {
+                        window._importedCharacter[inventoryKey].items = [];
+                    }
+                    window._importedCharacter[inventoryKey].items.push({
                         name: item.name,
                         quantity: item.quantity,
                         description: item.description,
-                        skill: item.skill,
-                        skillNote: item.skillNote
+                        skills: Array.isArray(item.skills) ? item.skills.slice() : []
                     });
                     // refresh imported inventory display
                     updateImportedInventoryDisplay();
