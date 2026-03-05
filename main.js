@@ -2,6 +2,24 @@ import { setupWhatToRollFeature } from './whatToRollFeature.js';
 import { setupImportExportFeature } from './importExportFeature.js';
 import { setupInventoryFeature } from './inventoryFeature.js';
 
+// Global debug flag with persistence
+const debugFlagKey = 'kalandor_debugMode';
+// Read from localStorage, default to false if not set
+window._debugMode = localStorage.getItem(debugFlagKey) === 'true';
+const debugToggle = document.getElementById('debugModeToggle');
+if (debugToggle) {
+    debugToggle.checked = window._debugMode;
+    debugToggle.addEventListener('change', function() {
+        window._debugMode = this.checked;
+        localStorage.setItem(debugFlagKey, window._debugMode);
+        if (window._debugMode) {
+            console.log('[DEBUG] Debug mode enabled');
+        } else {
+            console.log('[DEBUG] Debug mode disabled');
+        }
+    });
+}
+
 // default configuration – can be overridden by config.json
 window._config = {};
 
@@ -27,9 +45,11 @@ window._config = {};
 
     // load configuration early and then show its contents
     loadConfig().then(() => {
-        // show config in message area for visibility
-        showMessage('<pre style="text-align:left;white-space:pre-wrap;">' +
-            escapeHtml(JSON.stringify(window._config, null, 2)) + '</pre>', false);
+        // show config in message area only if debugging is enabled
+        if (window._debugMode) {
+            showMessage('<pre style="text-align:left;white-space:pre-wrap;">' +
+                escapeHtml(JSON.stringify(window._config, null, 2)) + '</pre>', false);
+        }
     });
 
     function showMessage(html, isError) {
@@ -58,19 +78,7 @@ window._config = {};
         });
     }
 
-// Global debug flag
-window._debugMode = false;
-const debugToggle = document.getElementById('debugModeToggle');
-if (debugToggle) {
-    debugToggle.addEventListener('change', function() {
-        window._debugMode = this.checked;
-        if (window._debugMode) {
-            console.log('[DEBUG] Debug mode enabled');
-        } else {
-            console.log('[DEBUG] Debug mode disabled');
-        }
-    });
-}
+
 
 // initialize extracted features after helpers are available
 setupWhatToRollFeature(showMessage, escapeHtml);

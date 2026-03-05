@@ -90,8 +90,12 @@ export function setupImportExportFeature(showMessage, escapeHtml) {
                     }
                     // Add a button to clear the displayed JSON
                     const clearBtnHtml = '<button id="clearImportResultBtn" class="btn-secondary" style="margin-bottom:10px;">Close</button>';
-                    const html = clearBtnHtml + '<h2>Importierte Daten</h2>' + renderObj(data);
-                    showMessage(html, false);
+                    if (window._debugMode) {
+                        const html = clearBtnHtml + '<h2>Importierte Daten</h2>' + renderObj(data);
+                        showMessage(html, false);
+                    } else {
+                        showMessage('<h2>Character imported successfully!</h2>', false);
+                    }
 
                     // Add event listener for the clear button
                     setTimeout(() => {
