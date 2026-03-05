@@ -112,11 +112,18 @@
           "name": "maneater", 
           "quantity": 1,
           "description": "A magnificent pink hat with rattlesnake skin embellishments.",
-          "skillNotes":{
-              "Beweglichkeit": "+10 auf alle Beweglichkeitswürfe, wenn der Charakter auf einem Bein steht",
-              "Athletik": "+5 auf alle Athletik-Würfe"
-          }
-      }
+         
+          "skillNotes": [
+            {
+              "skill": "Beweglichkeit",
+              "note": "+10 auf alle Beweglichkeitswürfe, wenn der Charakter auf einem Bein steht"
+            },
+            {
+              "skill": "Athletik",
+              "note": "+5 auf alle Athletik-Würfe"
+            }
+          ]
+	    }
     ]
   }
 }

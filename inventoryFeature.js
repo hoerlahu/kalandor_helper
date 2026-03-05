@@ -137,7 +137,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     name: name,
                     quantity: inQty.value ? inQty.value.trim() : '',
                     description: inDesc.value ? inDesc.value.trim() : '',
-                    skills: Array.isArray(currentSkillPairs) ? currentSkillPairs.slice() : []
+                    skillNotes: Array.isArray(currentSkillPairs) ? currentSkillPairs.slice() : []
                 };
 
                 const ul = renderManualList();
@@ -145,7 +145,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
                     (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
                     (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
-                    (item.skills && item.skills.length ? '<div class="muted">' + item.skills.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
+                    (item.skillNotes && item.skillNotes.length ? '<div class="muted">' + item.skillNotes.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
 
                 // add controls
                 const controls = document.createElement('span');
@@ -215,7 +215,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                         name: item.name,
                         quantity: item.quantity,
                         description: item.description,
-                        skills: Array.isArray(item.skills) ? item.skills.slice() : []
+                        skillNotes: Array.isArray(item.skillNotes) ? item.skillNotes.slice() : []
                     });
                     // refresh imported inventory display
                     updateImportedInventoryDisplay();
