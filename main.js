@@ -73,7 +73,8 @@ window._config = {};
             '"': '&quot;',
             "'": '&#39;'
         };
-        return s.replace(/[&<>\"']/g, function(c) {
+        if (typeof s !== 'string') s = String(s ?? '');
+        return s.replace(/[&<>"']/g, function(c) {
             return entityMap[c];
         });
     }

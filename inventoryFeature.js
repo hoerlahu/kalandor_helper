@@ -121,12 +121,73 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     importedContainer.innerHTML = '<p class="muted">No character imported. Please import a character to view the inventory.</p>';
                     return;
                 }
-                const items = findInventory(data);
-                if (items) {
-                    importedContainer.innerHTML = '<h3>Inventory</h3>' + renderObj(items);
-                } else {
-                    importedContainer.innerHTML = '<p class="muted">No inventory section found in the imported character. Added items will be stored under "' + escapeHtml(inventoryKey) + '".</p>';
+                const itemsObj = findInventory(data);
+                let items = [];
+                if (itemsObj && Array.isArray(itemsObj.items)) {
+                    items = itemsObj.items;
+                } else if (Array.isArray(itemsObj)) {
+                    items = itemsObj;
                 }
+                importedContainer.innerHTML = '<h3>Inventory</h3>';
+                if (!items.length) {
+                    importedContainer.innerHTML += '<p class="muted">No inventory section found in the imported character. Added items will be stored under "' + escapeHtml(inventoryKey) + '".</p>';
+                    return;
+                }
+                // Render each item as editable/deletable row
+                const ul = document.createElement('ul');
+                ul.className = 'manual';
+                items.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
+                        (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
+                        (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
+                        (item.skillNotes && item.skillNotes.length ? '<div class="muted">' + item.skillNotes.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
+
+                    // add controls
+                    const controls = document.createElement('span');
+                    controls.style.marginLeft = '12px';
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = 'Edit';
+                    editBtn.className = 'btn-secondary';
+                    editBtn.style.marginRight = '6px';
+                    const delBtn = document.createElement('button');
+                    delBtn.textContent = 'Delete';
+                    delBtn.className = 'btn-secondary';
+                    controls.appendChild(editBtn);
+                    controls.appendChild(delBtn);
+                    li.appendChild(controls);
+
+                    // wire delete: remove from imported character inventory.items array if exists
+                    delBtn.addEventListener('click', () => {
+                        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
+                            const arr = window._importedCharacter[inventoryKey].items;
+                            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
+                            if (idx !== -1) arr.splice(idx, 1);
+                            updateImportedInventoryDisplay();
+                        }
+                        li.remove();
+                    });
+
+                    // wire edit: prefill inputs and remove this li; on add it will re-persist
+                    editBtn.addEventListener('click', () => {
+                        inName.value = item.name;
+                        inQty.value = item.quantity || '';
+                        inDesc.value = item.description || '';
+                        currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
+                        renderSkillList();
+                        // remove existing entry from importedCharacter so re-adding updates it
+                        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
+                            const arr = window._importedCharacter[inventoryKey].items;
+                            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
+                            if (idx !== -1) arr.splice(idx, 1);
+                            updateImportedInventoryDisplay();
+                        }
+                        li.remove();
+                    });
+
+                    ul.appendChild(li);
+                });
+                importedContainer.appendChild(ul);
             }
 
             // show current imported inventory on open
@@ -320,12 +381,73 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
             }
 
             if (data) {
-                const items = findInventory(data);
-                if (items) {
-                    content.innerHTML = '<h3>Inventory</h3>' + renderObj(items);
-                } else {
-                    content.innerHTML = '<p class="muted">No inventory section found in the imported character. Add items manually below.</p>';
-                }
+                const itemsObj = findInventory(data);
+let items = [];
+if (itemsObj && Array.isArray(itemsObj.items)) {
+    items = itemsObj.items;
+} else if (Array.isArray(itemsObj)) {
+    items = itemsObj;
+}
+importedContainer.innerHTML = '<h3>Inventory</h3>';
+if (!items.length) {
+    importedContainer.innerHTML += '<p class="muted">No inventory section found in the imported character. Added items will be stored under "' + escapeHtml(inventoryKey) + '".</p>';
+    return;
+}
+// Render each item as editable/deletable row
+const ul = document.createElement('ul');
+ul.className = 'manual';
+items.forEach(item => {
+    const li = document.createElement('li');
+    li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
+        (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
+        (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
+        (item.skillNotes && item.skillNotes.length ? '<div class="muted">' + item.skillNotes.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
+
+    // add controls
+    const controls = document.createElement('span');
+    controls.style.marginLeft = '12px';
+    const editBtn = document.createElement('button');
+    editBtn.textContent = 'Edit';
+    editBtn.className = 'btn-secondary';
+    editBtn.style.marginRight = '6px';
+    const delBtn = document.createElement('button');
+    delBtn.textContent = 'Delete';
+    delBtn.className = 'btn-secondary';
+    controls.appendChild(editBtn);
+    controls.appendChild(delBtn);
+    li.appendChild(controls);
+
+    // wire delete: remove from imported character inventory.items array if exists
+    delBtn.addEventListener('click', () => {
+        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
+            const arr = window._importedCharacter[inventoryKey].items;
+            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
+            if (idx !== -1) arr.splice(idx, 1);
+            updateImportedInventoryDisplay();
+        }
+        li.remove();
+    });
+
+    // wire edit: prefill inputs and remove this li; on add it will re-persist
+    editBtn.addEventListener('click', () => {
+        inName.value = item.name;
+        inQty.value = item.quantity || '';
+        inDesc.value = item.description || '';
+        currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
+        renderSkillList();
+        // remove existing entry from importedCharacter so re-adding updates it
+        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
+            const arr = window._importedCharacter[inventoryKey].items;
+            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
+            if (idx !== -1) arr.splice(idx, 1);
+            updateImportedInventoryDisplay();
+        }
+        li.remove();
+    });
+
+    ul.appendChild(li);
+});
+importedContainer.appendChild(ul);
             } else {
                 // no imported character: prompt user to import
                 content.innerHTML = '<p class="muted">No character imported. Please import a character to view the inventory.</p>';
