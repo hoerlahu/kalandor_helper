@@ -23,9 +23,8 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 <div class="inventory-actions">
                     <input id="itemName" placeholder="Name" />
                     <input id="itemQty" placeholder="Quantity" style="width:80px;" />
-                    <input id="itemWeight" placeholder="Weight" style="width:100px;" />
-                    <input id="itemType" placeholder="Type" style="width:120px;" />
-                    <input id="itemValue" placeholder="Value" style="width:100px;" />
+                    <select id="itemSkillSelect" style="min-width:160px;"></select>
+                    <input id="itemSkillNoteText" placeholder="Skill note" />
                     <input id="itemDesc" placeholder="Description" />
                     <label style="display:inline-flex;align-items:center;gap:6px;margin-left:6px;"><input id="itemEquipped" type="checkbox" /> Equipped</label>
                     <button id="addItemBtn" class="btn-primary">Add</button>
@@ -44,11 +43,16 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
             const content = panel.querySelector('#inventoryContent');
             const inName = panel.querySelector('#itemName');
             const inQty = panel.querySelector('#itemQty');
-            const inWeight = panel.querySelector('#itemWeight');
-            const inType = panel.querySelector('#itemType');
-            const inValue = panel.querySelector('#itemValue');
             const inDesc = panel.querySelector('#itemDesc');
             const inEquipped = panel.querySelector('#itemEquipped');
+            const inSkillSelect = panel.querySelector('#itemSkillSelect');
+            const inSkillNote = panel.querySelector('#itemSkillNoteText');
+
+            // separate container for imported character inventory display
+            const importedContainer = document.createElement('div');
+            importedContainer.id = 'importedInventory';
+            content.innerHTML = '';
+            content.appendChild(importedContainer);
 
             function renderManualList() {
                 const ul = content.querySelector('ul.manual') || (function(){
@@ -61,16 +65,33 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 return ul;
             }
 
+            function updateImportedInventoryDisplay() {
+                importedContainer.innerHTML = '';
+                const data = window._importedCharacter;
+                if (!data) {
+                    importedContainer.innerHTML = '<p class="muted">No character imported. Please import a character to view the inventory.</p>';
+                    return;
+                }
+                const items = findInventory(data);
+                if (items) {
+                    importedContainer.innerHTML = '<h3>Inventory</h3>' + renderObj(items);
+                } else {
+                    importedContainer.innerHTML = '<p class="muted">No inventory section found in the imported character. Added items will be stored under "' + escapeHtml(inventoryKey) + '".</p>';
+                }
+            }
+
+            // show current imported inventory on open
+            updateImportedInventoryDisplay();
+
             addBtn.addEventListener('click', () => {
                 const name = inName.value && inName.value.trim();
                 if (!name) return;
                 const item = {
                     name: name,
                     quantity: inQty.value ? inQty.value.trim() : '',
-                    weight: inWeight.value ? inWeight.value.trim() : '',
-                    type: inType.value ? inType.value.trim() : '',
-                    value: inValue.value ? inValue.value.trim() : '',
                     description: inDesc.value ? inDesc.value.trim() : '',
+                    skill: inSkillSelect ? inSkillSelect.value : '',
+                    skillNote: inSkillNote ? inSkillNote.value.trim() : '',
                     equipped: !!inEquipped.checked
                 };
 
@@ -78,22 +99,115 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 const li = document.createElement('li');
                 li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
                     (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
-                    (item.type ? ' (' + escapeHtml(item.type) + ')' : '') +
                     (item.equipped ? ' <em>[equipped]</em>' : '') +
                     (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
-                    (item.weight ? '<div class="muted">Weight: ' + escapeHtml(item.weight) + '</div>' : '') +
-                    (item.value ? '<div class="muted">Value: ' + escapeHtml(item.value) + '</div>' : '');
+                    (item.skill ? '<div class="muted">Skill: ' + escapeHtml(item.skill) + (item.skillNote ? ' — ' + escapeHtml(item.skillNote) : '') + '</div>' : '');
+
+                // add controls
+                const controls = document.createElement('span');
+                controls.style.marginLeft = '12px';
+                const editBtn = document.createElement('button');
+                editBtn.textContent = 'Edit';
+                editBtn.className = 'btn-secondary';
+                editBtn.style.marginRight = '6px';
+                const delBtn = document.createElement('button');
+                delBtn.textContent = 'Delete';
+                delBtn.className = 'btn-secondary';
+                controls.appendChild(editBtn);
+                controls.appendChild(delBtn);
+                li.appendChild(controls);
+
+                // wire delete: remove from UI and importedCharacter if present
+                delBtn.addEventListener('click', () => {
+                    // remove from imported character array if exists
+                    if (window._importedCharacter && Array.isArray(window._importedCharacter[inventoryKey])) {
+                        const arr = window._importedCharacter[inventoryKey];
+                        // find an entry matching name+quantity+description roughly
+                        const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
+                        if (idx !== -1) arr.splice(idx, 1);
+                        updateImportedInventoryDisplay();
+                    }
+                    li.remove();
+                });
+
+                // wire edit: prefill inputs and remove this li; on add it will re-persist
+                editBtn.addEventListener('click', () => {
+                    inName.value = item.name;
+                    inQty.value = item.quantity || '';
+                    inDesc.value = item.description || '';
+                    inEquipped.checked = !!item.equipped;
+                    if (inSkillSelect) inSkillSelect.value = item.skill || '';
+                    if (inSkillNote) inSkillNote.value = item.skillNote || '';
+                    // remove existing entry from importedCharacter so re-adding updates it
+                    if (window._importedCharacter && Array.isArray(window._importedCharacter[inventoryKey])) {
+                        const arr = window._importedCharacter[inventoryKey];
+                        const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
+                        if (idx !== -1) arr.splice(idx, 1);
+                        updateImportedInventoryDisplay();
+                    }
+                    li.remove();
+                });
+
                 ul.appendChild(li);
 
                 // clear inputs
                 inName.value = '';
                 inQty.value = '';
-                inWeight.value = '';
-                inType.value = '';
-                inValue.value = '';
                 inDesc.value = '';
                 inEquipped.checked = false;
+                if (inSkillSelect) inSkillSelect.selectedIndex = 0;
+                if (inSkillNote) inSkillNote.value = '';
+                // persist into imported character if present
+                if (window._importedCharacter) {
+                    if (!(inventoryKey in window._importedCharacter) || !Array.isArray(window._importedCharacter[inventoryKey])) {
+                        // create as array
+                        window._importedCharacter[inventoryKey] = [];
+                    }
+                    window._importedCharacter[inventoryKey].push({
+                        name: item.name,
+                        quantity: item.quantity,
+                        description: item.description,
+                        skill: item.skill,
+                        skillNote: item.skillNote,
+                        equipped: item.equipped
+                    });
+                    // refresh imported inventory display
+                    updateImportedInventoryDisplay();
+                }
             });
+
+            // populate skills select from imported character (flatten nested Skills)
+            function populateSkills() {
+                if (!inSkillSelect) return;
+                inSkillSelect.innerHTML = '<option value="">(no skill)</option>';
+                const charData = window._importedCharacter;
+                if (!charData || !charData.Skills) return;
+                const parentData = charData.Skills;
+                function collectKeys(obj, prefix = '') {
+                    const keys = [];
+                    for (const k in obj) {
+                        if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
+                        const v = obj[k];
+                        const display = prefix ? (prefix + ' > ' + k) : k;
+                        if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
+                            keys.push(...collectKeys(v, display));
+                        } else {
+                            keys.push(display);
+                        }
+                    }
+                    return keys;
+                }
+                const skillKeys = collectKeys(parentData);
+                skillKeys.forEach(sk => {
+                    const opt = document.createElement('option');
+                    opt.value = sk;
+                    opt.textContent = sk;
+                    inSkillSelect.appendChild(opt);
+                });
+            }
+
+            // populate skills on open and whenever imported inventory display updates
+            populateSkills();
 
             // allow Enter key to add when focused on any of the add-item inputs
             const addFields = panel.querySelectorAll('.inventory-actions input');
