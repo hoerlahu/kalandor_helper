@@ -138,3 +138,13 @@ button {
 .inventory-panel .muted {
     color: #666;
 }
+
+/* layout tweaks for expanded form */
+.inventory-actions input[placeholder="Name"] { flex: 2; }
+.inventory-actions input[placeholder="Description"] { flex: 3; }
+.inventory-actions input[placeholder="Quantity"],
+.inventory-actions input[placeholder="Weight"],
+.inventory-actions input[placeholder="Type"],
+.inventory-actions input[placeholder="Value"] { flex: 0 0 auto; }
+.inventory-panel ul.manual { margin-top: 12px; }
+.inventory-panel ul.manual li { margin-bottom: 8px; }

@@ -1,5 +1,6 @@
 export function setupInventoryFeature(showMessage, escapeHtml) {
     const inv = document.getElementById('inventoryFeature');
+    const inventoryKey = "inventory"; // key to look for in the character data; can be customized or expanded as needed
     if (!inv) return; // nothing to do in non-browser environments or during tests
 
     inv.addEventListener('click', () => {
@@ -20,7 +21,13 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     <p class="muted">Loading inventory...</p>
                 </div>
                 <div class="inventory-actions">
-                    <input id="newItemInput" placeholder="Add item (e.g. Rope x1)" />
+                    <input id="itemName" placeholder="Name" />
+                    <input id="itemQty" placeholder="Quantity" style="width:80px;" />
+                    <input id="itemWeight" placeholder="Weight" style="width:100px;" />
+                    <input id="itemType" placeholder="Type" style="width:120px;" />
+                    <input id="itemValue" placeholder="Value" style="width:100px;" />
+                    <input id="itemDesc" placeholder="Description" />
+                    <label style="display:inline-flex;align-items:center;gap:6px;margin-left:6px;"><input id="itemEquipped" type="checkbox" /> Equipped</label>
                     <button id="addItemBtn" class="btn-primary">Add</button>
                 </div>
             `;
@@ -32,62 +39,126 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 panel.remove();
             });
 
-            // add item behavior
+            // add item behavior (structured fields)
             const addBtn = panel.querySelector('#addItemBtn');
-            const input = panel.querySelector('#newItemInput');
             const content = panel.querySelector('#inventoryContent');
+            const inName = panel.querySelector('#itemName');
+            const inQty = panel.querySelector('#itemQty');
+            const inWeight = panel.querySelector('#itemWeight');
+            const inType = panel.querySelector('#itemType');
+            const inValue = panel.querySelector('#itemValue');
+            const inDesc = panel.querySelector('#itemDesc');
+            const inEquipped = panel.querySelector('#itemEquipped');
 
-            addBtn.addEventListener('click', () => {
-                const text = input.value && input.value.trim();
-                if (!text) return;
-                const ul = content.querySelector('ul') || (function(){
+            function renderManualList() {
+                const ul = content.querySelector('ul.manual') || (function(){
                     const u = document.createElement('ul');
-                    content.innerHTML = '';
+                    u.className = 'manual';
+                    // if content already has other lists, append after them
                     content.appendChild(u);
                     return u;
                 })();
+                return ul;
+            }
+
+            addBtn.addEventListener('click', () => {
+                const name = inName.value && inName.value.trim();
+                if (!name) return;
+                const item = {
+                    name: name,
+                    quantity: inQty.value ? inQty.value.trim() : '',
+                    weight: inWeight.value ? inWeight.value.trim() : '',
+                    type: inType.value ? inType.value.trim() : '',
+                    value: inValue.value ? inValue.value.trim() : '',
+                    description: inDesc.value ? inDesc.value.trim() : '',
+                    equipped: !!inEquipped.checked
+                };
+
+                const ul = renderManualList();
                 const li = document.createElement('li');
-                li.textContent = text;
+                li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
+                    (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
+                    (item.type ? ' (' + escapeHtml(item.type) + ')' : '') +
+                    (item.equipped ? ' <em>[equipped]</em>' : '') +
+                    (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
+                    (item.weight ? '<div class="muted">Weight: ' + escapeHtml(item.weight) + '</div>' : '') +
+                    (item.value ? '<div class="muted">Value: ' + escapeHtml(item.value) + '</div>' : '');
                 ul.appendChild(li);
-                input.value = '';
+
+                // clear inputs
+                inName.value = '';
+                inQty.value = '';
+                inWeight.value = '';
+                inType.value = '';
+                inValue.value = '';
+                inDesc.value = '';
+                inEquipped.checked = false;
             });
 
-            // allow Enter key to add
-            input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') addBtn.click();
-            });
-
-            // populate from imported character if available
-            const data = window._importedCharacter;
-            if (data) {
-                // try some common keys for inventory-like data
-                const possibleKeys = ['Inventar','Inventory','Items','Gegenstände'];
-                let items = null;
-                for (const k of possibleKeys) {
-                    if (k in data) { items = data[k]; break; }
-                }
-                if (items) {
-                    const ul = document.createElement('ul');
-                    if (Array.isArray(items)) {
-                        items.forEach(i => ul.appendChild(Object.assign(document.createElement('li'), { textContent: String(i) })));
-                    } else if (typeof items === 'object') {
-                        for (const key in items) {
-                            if (Object.prototype.hasOwnProperty.call(items, key)) {
-                                const li = document.createElement('li');
-                                li.innerHTML = '<strong>' + escapeHtml(key) + ':</strong> ' + escapeHtml(String(items[key]));
-                                ul.appendChild(li);
-                            }
-                        }
-                    } else {
-                        ul.appendChild(Object.assign(document.createElement('li'), { textContent: String(items) }));
+            // allow Enter key to add when focused on any of the add-item inputs
+            const addFields = panel.querySelectorAll('.inventory-actions input');
+            addFields.forEach(f => {
+                if (f.type === 'checkbox') return; // skip checkbox
+                f.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addBtn.click();
                     }
-                    content.innerHTML = '';
-                    content.appendChild(ul);
+                });
+            });
+
+            // helper to render nested objects/arrays into HTML
+            function renderObj(obj, depth = 0) {
+                if (obj === null || obj === undefined) return '';
+                if (typeof obj !== 'object') {
+                    return '<span>' + escapeHtml(String(obj)) + '</span>';
+                }
+                let html = '<ul style="margin-left:' + (depth * 20) + 'px;">';
+                if (Array.isArray(obj)) {
+                    for (const item of obj) {
+                        html += '<li>' + renderObj(item, depth + 1) + '</li>';
+                    }
+                } else {
+                    for (const key in obj) {
+                        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                            html += '<li><strong>' + escapeHtml(key) + ':</strong> ' + renderObj(obj[key], depth + 1) + '</li>';
+                        }
+                    }
+                }
+                html += '</ul>';
+                return html;
+            }
+
+            // populate from imported character if available; do NOT auto-load sample files
+            const data = window._importedCharacter;
+
+            // recursive search for inventory keys anywhere in the object
+            function findInventory(obj) {
+                if (!obj || typeof obj !== 'object') return null;
+                if (inventoryKey in obj) return obj[inventoryKey];
+
+                for (const key in obj) {
+                    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                        const v = obj[key];
+                        if (typeof v === 'object') {
+                            const res = findInventory(v);
+                            if (res !== null) return res;
+                        }
+                    }
+                }
+                return null;
+            }
+
+            if (data) {
+                const items = findInventory(data);
+                if (items) {
+                    content.innerHTML = '<h3>Inventory</h3>' + renderObj(items);
                 } else {
                     content.innerHTML = '<p class="muted">No inventory section found in the imported character. Add items manually below.</p>';
                 }
             } else {
-                content.innerHTML = '<p class="muted">No character imported. Add items manually below.</p>';
+                // no imported character: prompt user to import
+                content.innerHTML = '<p class="muted">No character imported. Please import a character to view the inventory.</p>';
             }
         }
     });

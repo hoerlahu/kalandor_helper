@@ -105,5 +105,18 @@
       "Schmiedekunst":1,
       "Überleben": 3
     }
-  } 
+  },
+  "inventory": {
+    "items": [
+      {   
+          "name": "maneater", 
+          "quantity": 1,
+          "description": "A magnificent pink hat with rattlesnake skin embellishments.",
+          "skillNotes":{
+              "Beweglichkeit": "+10 auf alle Beweglichkeitswürfe, wenn der Charakter auf einem Bein steht",
+              "Athletik": "+5 auf alle Athletik-Würfe"
+          }
+      }
+    ]
+  }
 }
