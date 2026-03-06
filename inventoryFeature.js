@@ -61,6 +61,17 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
             const skillListDiv = panel.querySelector('#itemSkillList');
             // in-memory list of {skill, note} pairs for the item being edited/created
             let currentSkillPairs = [];
+            let editingItemRef = null;
+
+            function setEditingItem(item) {
+                editingItemRef = item;
+                if (addBtn) addBtn.textContent = 'Save';
+            }
+
+            function clearEditingItem() {
+                editingItemRef = null;
+                if (addBtn) addBtn.textContent = 'Add';
+            }
 
             function renderSkillList() {
                 skillListDiv.innerHTML = '';
@@ -175,14 +186,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                         inDesc.value = item.description || '';
                         currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
                         renderSkillList();
-                        // remove existing entry from importedCharacter so re-adding updates it
-                        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
-                            const arr = window._importedCharacter[inventoryKey].items;
-                            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
-                            if (idx !== -1) arr.splice(idx, 1);
-                            updateImportedInventoryDisplay();
-                        }
-                        li.remove();
+                        setEditingItem(item);
                     });
 
                     ul.appendChild(li);
@@ -203,58 +207,65 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     skillNotes: Array.isArray(currentSkillPairs) ? currentSkillPairs.slice() : []
                 };
 
-                const ul = renderManualList();
-                const li = document.createElement('li');
-                li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
-                    (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
-                    (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
-                    (item.skillNotes && item.skillNotes.length ? '<div class="muted">' + item.skillNotes.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
+                const isEditing = !!editingItemRef;
 
-                // add controls
-                const controls = document.createElement('span');
-                controls.style.marginLeft = '12px';
-                const editBtn = document.createElement('button');
-                editBtn.textContent = 'Edit';
-                editBtn.className = 'btn-secondary';
-                editBtn.style.marginRight = '6px';
-                const delBtn = document.createElement('button');
-                delBtn.textContent = 'Delete';
-                delBtn.className = 'btn-secondary';
-                controls.appendChild(editBtn);
-                controls.appendChild(delBtn);
-                li.appendChild(controls);
+                if (!isEditing) {
+                    const ul = renderManualList();
+                    const li = document.createElement('li');
+                    li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
+                        (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
+                        (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
+                        (item.skillNotes && item.skillNotes.length ? '<div class="muted">' + item.skillNotes.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
 
-        // wire delete: remove from UI and importedCharacter if present
-                delBtn.addEventListener('click', () => {
-                    // remove from imported character inventory.items array if exists
-                    if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
-                        const arr = window._importedCharacter[inventoryKey].items;
-                        // find an entry matching name+quantity+description roughly
-                        const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
-                        if (idx !== -1) arr.splice(idx, 1);
-                        updateImportedInventoryDisplay();
-                    }
-                    li.remove();
-                });
+                    // add controls
+                    const controls = document.createElement('span');
+                    controls.style.marginLeft = '12px';
+                    const editBtn = document.createElement('button');
+                    editBtn.textContent = 'Edit';
+                    editBtn.className = 'btn-secondary';
+                    editBtn.style.marginRight = '6px';
+                    const delBtn = document.createElement('button');
+                    delBtn.textContent = 'Delete';
+                    delBtn.className = 'btn-secondary';
+                    controls.appendChild(editBtn);
+                    controls.appendChild(delBtn);
+                    li.appendChild(controls);
 
-                // wire edit: prefill inputs and remove this li; on add it will re-persist
-                editBtn.addEventListener('click', () => {
-                    inName.value = item.name;
-                    inQty.value = item.quantity || '';
-                    inDesc.value = item.description || '';
-                    if (inSkillSelect) inSkillSelect.value = item.skill || '';
-                    if (inSkillNote) inSkillNote.value = item.skillNote || '';
-                    // remove existing entry from importedCharacter so re-adding updates it
-                    if (window._importedCharacter && Array.isArray(window._importedCharacter[inventoryKey])) {
-                        const arr = window._importedCharacter[inventoryKey];
-                        const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
-                        if (idx !== -1) arr.splice(idx, 1);
-                        updateImportedInventoryDisplay();
-                    }
-                    li.remove();
-                });
+            // wire delete: remove from UI and importedCharacter if present
+                    delBtn.addEventListener('click', () => {
+                        // remove from imported character inventory.items array if exists
+                        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
+                            const arr = window._importedCharacter[inventoryKey].items;
+                            // find an entry matching name+quantity+description roughly
+                            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
+                            if (idx !== -1) arr.splice(idx, 1);
+                            updateImportedInventoryDisplay();
+                        }
+                        if (editingItemRef === item) {
+                            clearEditingItem();
+                        }
+                        li.remove();
+                    });
 
-                ul.appendChild(li);
+                    // wire edit: prefill inputs; only save updates after confirm
+                    editBtn.addEventListener('click', () => {
+                        inName.value = item.name;
+                        inQty.value = item.quantity || '';
+                        inDesc.value = item.description || '';
+                        currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
+                        renderSkillList();
+                        setEditingItem(item);
+                    });
+
+                    ul.appendChild(li);
+                }
+
+                if (isEditing && editingItemRef) {
+                    editingItemRef.name = item.name;
+                    editingItemRef.quantity = item.quantity;
+                    editingItemRef.description = item.description;
+                    editingItemRef.skillNotes = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
+                }
 
                 // clear inputs
                 inName.value = '';
@@ -274,14 +285,20 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     if (!Array.isArray(window._importedCharacter[inventoryKey].items)) {
                         window._importedCharacter[inventoryKey].items = [];
                     }
-                    window._importedCharacter[inventoryKey].items.push({
-                        name: item.name,
-                        quantity: item.quantity,
-                        description: item.description,
-                        skillNotes: Array.isArray(item.skillNotes) ? item.skillNotes.slice() : []
-                    });
+                    if (!isEditing) {
+                        window._importedCharacter[inventoryKey].items.push({
+                            name: item.name,
+                            quantity: item.quantity,
+                            description: item.description,
+                            skillNotes: Array.isArray(item.skillNotes) ? item.skillNotes.slice() : []
+                        });
+                    }
                     // refresh imported inventory display
                     updateImportedInventoryDisplay();
+                }
+
+                if (isEditing) {
+                    clearEditingItem();
                 }
             });
 
@@ -435,14 +452,7 @@ items.forEach(item => {
         inDesc.value = item.description || '';
         currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
         renderSkillList();
-        // remove existing entry from importedCharacter so re-adding updates it
-        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
-            const arr = window._importedCharacter[inventoryKey].items;
-            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
-            if (idx !== -1) arr.splice(idx, 1);
-            updateImportedInventoryDisplay();
-        }
-        li.remove();
+        setEditingItem(item);
     });
 
     ul.appendChild(li);
