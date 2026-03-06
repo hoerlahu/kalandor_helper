@@ -309,6 +309,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 const charData = window._importedCharacter;
                 if (!charData || !charData.Skills) return;
                 const parentData = charData.Skills;
+                const optionValues = new Set();
                 function collectKeys(obj, prefix = '', depth = 1, includeSecondLevel = false) {
                     const keys = [];
                     for (const k in obj) {
@@ -327,15 +328,36 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                     return keys;
                 }
                 const skillKeys = Array.from(new Set(collectKeys(parentData, '', 1, true)));
+                const metaSkillKeys = [];
+                if (window._config) {
+                    Object.keys(window._config).forEach(k => {
+                        const v = window._config[k];
+                        if (v && typeof v === 'object' && v.MetaSkill === true) {
+                            metaSkillKeys.push(k);
+                        }
+                    });
+                }
                 skillKeys.forEach(sk => {
+                    if (optionValues.has(sk)) return;
+                    optionValues.add(sk);
                     const opt = document.createElement('option');
                     opt.value = sk;
                     opt.textContent = sk;
                     inSkillSelect.appendChild(opt);
                 });
+                metaSkillKeys.forEach(ms => {
+                    if (optionValues.has(ms)) return;
+                    optionValues.add(ms);
+                    const opt = document.createElement('option');
+                    opt.value = ms;
+                    opt.textContent = ms;
+                    inSkillSelect.appendChild(opt);
+                });
                 const attributes = charData.Attribute.Basiswert;                
                 const attributeKeys = collectKeys(attributes);
                 attributeKeys.forEach(att => {
+                    if (optionValues.has(att)) return;
+                    optionValues.add(att);
                     const opt = document.createElement('option');
                     opt.value = att;
                     opt.textContent = att;
