@@ -309,21 +309,24 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 const charData = window._importedCharacter;
                 if (!charData || !charData.Skills) return;
                 const parentData = charData.Skills;
-                function collectKeys(obj, prefix = '') {
+                function collectKeys(obj, prefix = '', depth = 1, includeSecondLevel = false) {
                     const keys = [];
                     for (const k in obj) {
                         if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
                         const v = obj[k];
                         const display = prefix ? (prefix + ' > ' + k) : k;
                         if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
-                            keys.push(...collectKeys(v, display));
+                            if (includeSecondLevel && depth === 2) {
+                                keys.push(display);
+                            }
+                            keys.push(...collectKeys(v, display, depth + 1, includeSecondLevel));
                         } else {
                             keys.push(display);
                         }
                     }
                     return keys;
                 }
-                const skillKeys = collectKeys(parentData);
+                const skillKeys = Array.from(new Set(collectKeys(parentData, '', 1, true)));
                 skillKeys.forEach(sk => {
                     const opt = document.createElement('option');
                     opt.value = sk;

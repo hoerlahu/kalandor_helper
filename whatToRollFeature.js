@@ -6,9 +6,13 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         if (level2) roll = level2;
         if (level3) roll = level3;
         if (level4) roll = level4;
+        const selectedSkill = level4 || level3 || level2;
 
         let config = window._config;
-
+        if(!config[roll]){
+            // If no specific config for the selected roll, try to use __DEFAULT__ config if available
+            roll = "__DEFAULT__";
+        }
         // config object will be imported from main via closure later
         if (config && config[roll]) {
             let output = "";
@@ -19,24 +23,50 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 }
                 // Use BasiswertMultiplier if present, default to 1
                 const basiswertMultiplier = typeof config[roll].BasiswertMultiplier === 'number' ? config[roll].BasiswertMultiplier : 1;
-                let overallValue = window._importedCharacter["Attribute"]["Basiswert"][base] * basiswertMultiplier + skillValue;
-
-                if(config[roll]['10erStelle']){
-                    overallValue += Math.floor(window._importedCharacter["Attribute"]["Basiswert"][base] / 10);
-                }
+                const basiswert = window._importedCharacter["Attribute"]["Basiswert"][base];
                 
-                if(config[roll]['BasisWertPunkteMultiplikator'] > 0){
-                    overallValue += window._importedCharacter["Attribute"]["Punkte"][base] * config[roll]['BasisWertPunkteMultiplikator'];
+                const zehnerStelle = Math.floor(window._importedCharacter["Attribute"]["Basiswert"][base] / 10);
+                const zehnerStelleMultiplikator = config[roll]['10erStelleMultiplikator'] ? config[roll]['10erStelleMultiplikator'] : 0;
+
+                const basisWertPunkte = window._importedCharacter["Attribute"]["Punkte"][base] || 0;
+                const basisWertPunkteMultiplikator = config[roll]['BasisWertPunkteMultiplikator'] || 0;
+                
+                const overallValue = (basiswert * basiswertMultiplier) + skillValue + (zehnerStelle * zehnerStelleMultiplikator) + (basisWertPunkte * basisWertPunkteMultiplikator);
+
+                let notesHtml = '';
+                if (selectedSkill && window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
+                const items = window._importedCharacter.inventory.items;
+                let foundNotes = [];
+                items.forEach(item => {
+                    if (Array.isArray(item.skillNotes)) {
+                        item.skillNotes.forEach(noteObj => {
+                            if ((noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2) && noteObj.note) {
+                                foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + '</div>');
+                            }
+                        });
+                    }
+                });
+                if (foundNotes.length) {
+                    notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
                 }
+            }
+            
 
                 output += "<br>" +
-                    "Base Attributes: " + base + "<br>" +
+                    "<details style='margin-top:8px;'>" +
+                    "<summary style='cursor:pointer;color:#0366d6;'>" + base + "</summary>" +
+                    "<div style='margin-left:16px;margin-top:8px;'>" +
+                    "Basiswert: " + basiswert + "<br>" +
                     "BasiswertMultiplier: " + basiswertMultiplier + "<br>" +
-                    "10s Place Attributes: " + (config[roll]['10erStelle'] ? "Yes" : "No") + "<br>" +
-                    "PunkteMulti: " + (config[roll]['BasisWertPunkteMultiplikator']) + "<br>" +
-                    "Multiplier: " + (config[roll].WertMultiplikator) + "<br>" +
-                    "Gesamt: " + overallValue + "<br>";
+                    "10s Place Attributes: " + (config[roll]['10erStelle'] ? (zehnerStelle * zehnerStelleMultiplikator) : "No") + "<br>" +
+                    "BasiswertPunkte: " + (basisWertPunkte * basisWertPunkteMultiplikator) + "<br>" +
+                    "Skillpunkte: " + (skillValue) + "<br>" +
+                    "<br>" +
+                    "Items: " + (notesHtml ? notesHtml : "None") + "<br>"+
+                    "</div>" +
+                    "</details>";
             });
+            
             return output;
         } else {
             return "No configuration found for roll: " + roll;
@@ -175,29 +205,8 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 grandchildSelect.style.display = 'block';
                 grandchildLabel.style.display = 'block';
             } else {
-                let notesHtml = '';
-                let rollSkill = selectedChild;
-                if (window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
-                    const items = window._importedCharacter.inventory.items;
-                    let foundNotes = [];
-                    items.forEach(item => {
-                        if (Array.isArray(item.skillNotes)) {
-                            item.skillNotes.forEach(noteObj => {
-                                if (noteObj.skill === rollSkill && noteObj.note) {
-                                    foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + '</div>');
-                                }
-                            });
-                        }
-                    });
-                    if (foundNotes.length) {
-                        notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
-                    }
-                }
-
-
-
                 // Leaf value reached
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild) + '</strong>' + notesHtml;
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild) + '</strong>';
                 grandchildSelect.style.display = 'none';
                 grandchildLabel.style.display = 'none';
             }
@@ -229,26 +238,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 greatgrandchildLabel.style.display = 'block';
             } else {
                 // Leaf value reached
-                const rollSkill = selectedGrandchild;
-                let notesHtml = '';
-                // Search items for matching skillNotes
-                if (window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
-                    const items = window._importedCharacter.inventory.items;
-                    let foundNotes = [];
-                    items.forEach(item => {
-                        if (Array.isArray(item.skillNotes)) {
-                            item.skillNotes.forEach(noteObj => {
-                                if (noteObj.skill === rollSkill && noteObj.note) {
-                                    foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + '</div>');
-                                }
-                            });
-                        }
-                    });
-                    if (foundNotes.length) {
-                        notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
-                    }
-                }
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild) + '</strong>' + notesHtml;
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild) + '</strong>';
                 greatgrandchildSelect.style.display = 'none';
                 greatgrandchildLabel.style.display = 'none';
             }
@@ -265,25 +255,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             }
 
             const value = charData[selectedParent][selectedChild][selectedGrandchild][selectedGreatgrandchild];
-            const rollSkill = selectedGreatgrandchild;
-            let notesHtml = '';
-            if (window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
-                const items = window._importedCharacter.inventory.items;
-                let foundNotes = [];
-                items.forEach(item => {
-                    if (Array.isArray(item.skillNotes)) {
-                        item.skillNotes.forEach(noteObj => {
-                            if (noteObj.skill === rollSkill && noteObj.note) {
-                                foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + '</div>');
-                            }
-                        });
-                    }
-                });
-                if (foundNotes.length) {
-                    notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
-                }
-            }
-            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild,selectedGreatgrandchild) + '</strong>' + notesHtml;
+            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild,selectedGreatgrandchild) + '</strong>';
         });
     });
 }

@@ -1,40 +1,41 @@
 {
-  "Athletik" : {
-    "BasisWert" : ["Beweglichkeit", "Stärke"],
-    "BasiswertMultiplier": 1,
-    "10erStelle": true,
-    "BasisWertPunkteMultiplikator": 5,
-    "WertMultiplikator": 10,
-    "MetaSkill": false
-  },
-  "Fahren": {
-    "BasisWert": ["Geistesschärfe", "Beweglichkeit"],
-    "BasiswertMultiplier": 1,
-    "10erStelle": true,
-    "BasisWertPunkteMultiplikator": 5,
-    "WertMultiplikator": 10,
-    "MetaSkill": false
-  },
-  "Ausweichen": {
-    "BasisWert": ["Beweglichkeit"],
+  "__DEFAULT__": {
+    "BasisWert": [
+      "Beweglichkeit",
+      "Stärke",
+      "Robustheit",
+      "Intuition",
+      "Charisma",
+      "Glück",
+      "Wahrnehmung",
+      "Geistesschärfe",
+      "Willenskraft"
+    ],
     "BasiswertMultiplier": 1,
     "10erStelle": false,
+    "10erStelleMultiplikator": 0,
     "BasisWertPunkteMultiplikator": 0,
-    "WertMultiplikator": 0,
+    "WertMultiplikator": 10,
     "MetaSkill": false
   },
   "KasperlesTheater": {
-    "BasisWert": ["Beweglichkeit"],
+    "BasisWert": [
+      "Beweglichkeit"
+    ],
     "BasiswertMultiplier": 1,
     "10erStelle": false,
+    "10erStelleMultiplikator": 0,
     "BasisWertPunkteMultiplikator": 0,
     "WertMultiplikator": 0,
     "MetaSkill": true
   },
   "Absorbtion": {
-    "BasisWert": ["Robustheit"],
+    "BasisWert": [
+      "Robustheit"
+    ],
     "BasiswertMultiplier": 0,
     "10erStelle": true,
+    "10erStelleMultiplikator": 1,
     "BasisWertPunkteMultiplikator": 1,
     "WertMultiplikator": 0,
     "MetaSkill": true
