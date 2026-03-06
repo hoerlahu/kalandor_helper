@@ -310,7 +310,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 if (!charData || !charData.Skills) return;
                 const parentData = charData.Skills;
                 const optionValues = new Set();
-                function collectKeys(obj, prefix = '', depth = 1, includeSecondLevel = false) {
+                function collectKeys(obj, prefix = '', depth = 1, includeSecondLevel = false, includeFirstLevel = false) {
                     const keys = [];
                     for (const k in obj) {
                         if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
@@ -320,14 +320,18 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                             if (includeSecondLevel && depth === 2) {
                                 keys.push(display);
                             }
-                            keys.push(...collectKeys(v, display, depth + 1, includeSecondLevel));
+                            if(includeFirstLevel && depth === 1) {
+                                keys.push(display);
+                            }
+                            keys.push(...collectKeys(v, display, depth + 1, includeSecondLevel, includeFirstLevel));
                         } else {
                             keys.push(display);
                         }
                     }
                     return keys;
                 }
-                const skillKeys = Array.from(new Set(collectKeys(parentData, '', 1, true)));
+                
+                const skillKeys = Array.from(new Set(collectKeys(parentData, '', 1, true, true)));
                 const metaSkillKeys = [];
                 if (window._config) {
                     Object.keys(window._config).forEach(k => {
