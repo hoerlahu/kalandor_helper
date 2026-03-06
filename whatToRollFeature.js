@@ -22,8 +22,6 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     skillValue = window._importedCharacter[level1][level2][level3][level4] * config[roll].WertMultiplikator;
                 } else if(level1 && level2 && level3){
                     skillValue = window._importedCharacter[level1][level2][level3] * config[roll].WertMultiplikator;
-                } else if(level1 && level2){
-                    skillValue = window._importedCharacter[level1][level2] * config[roll].WertMultiplikator;
                 }
                 // Use BasiswertMultiplier if present, default to 1
                 const basiswertMultiplier = typeof config[roll].BasiswertMultiplier === 'number' ? config[roll].BasiswertMultiplier : 1;
@@ -65,6 +63,8 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     "10s Place Attributes: " + (config[roll]['10erStelle'] ? (zehnerStelle * zehnerStelleMultiplikator) : "No") + "<br>" +
                     "BasiswertPunkte: " + (basisWertPunkte * basisWertPunkteMultiplikator) + "<br>" +
                     "Skillpunkte: " + (skillValue) + "<br>" +
+                    "<br>" +
+                    "Grundwert: " + overallValue + "<br>" +
                     "<br>" +
                     "Items: " + (notesHtml ? notesHtml : "None") + "<br>"+
                     "</div>" +
