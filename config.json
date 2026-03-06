@@ -18,17 +18,6 @@
     "WertMultiplikator": 10,
     "MetaSkill": false
   },
-  "KasperlesTheater": {
-    "BasisWert": [
-      "Beweglichkeit"
-    ],
-    "BasiswertMultiplier": 1,
-    "10erStelle": false,
-    "10erStelleMultiplikator": 0,
-    "BasisWertPunkteMultiplikator": 0,
-    "WertMultiplikator": 0,
-    "MetaSkill": true
-  },
   "Absorbtion": {
     "BasisWert": [
       "Robustheit"
