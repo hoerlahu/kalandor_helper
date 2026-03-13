@@ -1,0 +1,138 @@
+<style>
+  .ug-wrap {
+    font-family: Arial, sans-serif;
+    text-align: left;
+    color: #033;
+    line-height: 1.6;
+  }
+  .ug-wrap h1 {
+    font-size: 1.4em;
+    color: #333;
+    margin-bottom: 4px;
+  }
+  .ug-wrap h2 {
+    font-size: 1.15em;
+    color: #4a4a8a;
+    margin: 20px 0 6px;
+    border-bottom: 1px solid #cfe6ff;
+    padding-bottom: 3px;
+  }
+  .ug-wrap p {
+    margin: 6px 0;
+  }
+  .ug-wrap ol,
+  .ug-wrap ul {
+    margin: 6px 0 6px 20px;
+  }
+  .ug-wrap li {
+    margin: 3px 0;
+  }
+  .ug-wrap code {
+    background: #eef3ff;
+    border-radius: 3px;
+    padding: 1px 5px;
+    font-size: 0.9em;
+    font-family: monospace;
+  }
+  .ug-wrap strong {
+    color: #222;
+  }
+  .ug-wrap hr {
+    border: none;
+    border-top: 1px solid #cfe6ff;
+    margin: 16px 0;
+  }
+  .ug-section-label {
+    display: inline-block;
+    background: #667eea;
+    color: #fff;
+    border-radius: 4px;
+    padding: 2px 10px;
+    font-size: 0.85em;
+    font-weight: bold;
+    margin-bottom: 6px;
+    letter-spacing: 0.04em;
+  }
+</style>
+
+<div class="ug-wrap">
+  <h1>&#x1F4D6; Kalandor Character Manager &ndash; User Guide</h1>
+
+  <h2><span class="ug-section-label">&#x1F9EC;</span> Character Creation</h2>
+  <p>Use <strong>Character Creation</strong> when you want to start from scratch.</p>
+  <p><strong>How to use:</strong></p>
+  <ol>
+    <li>Click <strong>Character Creation</strong>.</li>
+    <li>Fill in <strong>Allgemein</strong> fields (Name, Spezies, etc.).</li>
+    <li>Set <strong>Attribute</strong> values for <code>Basiswert</code> and <code>Punkte</code>.</li>
+    <li>Fill <strong>Skills &ndash; Ausbildung</strong> values per category:
+      <code>K&ouml;rperlich</code>, <code>Kampf</code>, <code>Sozial</code>, <code>Bildung</code>.
+    </li>
+    <li>Fill <strong>Skills &ndash; Disziplinen</strong> key/value rows.</li>
+    <li>Click <strong>Create Character</strong>.</li>
+  </ol>
+  <p><strong>Result:</strong> The character is created in memory. You can immediately use
+    <strong>Inventory</strong>, <strong>What do I roll?</strong>, and <strong>Export JSON</strong>.
+  </p>
+
+  <hr>
+
+  <h2><span class="ug-section-label">&#x1F4C2;</span> Import JSON</h2>
+  <p>Use <strong>Import JSON</strong> when you already have a character file.</p>
+  <p><strong>How to use:</strong></p>
+  <ol>
+    <li>Click <strong>Import JSON</strong>.</li>
+    <li>Select a <code>.json</code> file.</li>
+    <li>The file is parsed and stored as the active character.</li>
+  </ol>
+  <p><strong>Notes:</strong> In debug mode, imported content is shown in detail.</p>
+
+  <hr>
+
+  <h2><span class="ug-section-label">&#x1F4BE;</span> Export JSON</h2>
+  <p>Use <strong>Export JSON</strong> to save your current active character.</p>
+  <p><strong>How to use:</strong></p>
+  <ol>
+    <li>Ensure a character is loaded or created.</li>
+    <li>Click <strong>Export JSON</strong>.</li>
+  </ol>
+  <p><strong>Result:</strong> A JSON file is downloaded. Filename pattern:
+    <code>YYYY_MM_DD CharacterName.json</code>.
+  </p>
+
+  <hr>
+
+  <h2><span class="ug-section-label">&#x1F392;</span> Inventory</h2>
+  <p>Use <strong>Inventory</strong> to add and manage items and roll-related notes.</p>
+  <p><strong>How to use:</strong></p>
+  <ol>
+    <li>Click <strong>Inventory</strong>.</li>
+    <li>Fill in item fields: Name, Quantity, Description.</li>
+    <li>Optionally add skill notes:
+      <ul>
+        <li>Select a skill or attribute.</li>
+        <li>Enter a note and click <strong>Add Skill</strong>.</li>
+      </ul>
+    </li>
+    <li>Click <strong>Add</strong> to save the item.</li>
+  </ol>
+  <p><strong>Additional actions:</strong> <strong>Edit</strong> &bull; <strong>Delete</strong> &bull; <strong>Close</strong> panel.</p>
+  <p><strong>Result:</strong> Data is stored on the active character.</p>
+
+  <hr>
+
+  <h2><span class="ug-section-label">&#x1F3B2;</span> What do I roll?</h2>
+  <p>Use <strong>What do I roll?</strong> to inspect roll calculation inputs.</p>
+  <p><strong>How to use:</strong></p>
+  <ol>
+    <li>Click <strong>What do I roll?</strong>.</li>
+    <li>Select skill path levels from the cascading selectors.</li>
+    <li>Inspect generated roll details.</li>
+  </ol>
+  <p><strong>The panel shows:</strong> basis values &bull; multipliers &bull; computed total &bull; matching inventory notes.</p>
+
+  <hr>
+
+  <h2><span class="ug-section-label">&#x2139;&#xFE0F;</span> Learn More</h2>
+  <p>The <strong>Learn More</strong> button loads and displays this guide directly in the app.</p>
+</div>

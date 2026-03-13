@@ -59,21 +59,18 @@ function loadConfig() {
 }
 
 function loadReadme() {
-    return fetch('README.md')
+    return fetch('USER_GUIDE.html')
         .then((response) => {
             if (!response.ok) {
-                throw new Error('README.md could not be loaded.');
+                throw new Error('USER_GUIDE.html could not be loaded.');
             }
             return response.text();
         })
-        .then((readmeText) => {
-            showMessage(
-                `<pre style="text-align:left;white-space:pre-wrap;">${escapeHtml(readmeText)}</pre>`,
-                false
-            );
+        .then((guideHtml) => {
+            showMessage(guideHtml, false);
         })
         .catch((error) => {
-            showMessage(escapeHtml(error.message || 'Failed to load README.md.'), true);
+            showMessage(escapeHtml(error.message || 'Failed to load user guide.'), true);
         });
 }
 
