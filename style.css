@@ -230,3 +230,58 @@ button {
     border-radius: 4px;
     padding: 4px 8px;
 }
+
+.character-creation-panel {
+    margin-top: 20px;
+    text-align: left;
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid #e6eefc;
+    padding: 16px;
+}
+
+.character-creation-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.character-creation-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin: 12px 0;
+}
+
+.cc-label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #333;
+    font-size: 0.9em;
+}
+
+.cc-input {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
+
+.character-creation-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.cc-disziplinen-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.cc-disziplin-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 8px;
+}

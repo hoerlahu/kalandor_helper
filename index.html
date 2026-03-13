@@ -16,6 +16,10 @@
         <p class="subtitle">Your companion for pen and paper adventures</p>
         
         <div class="features">
+            <div class="feature" id="characterCreationFeature" style="cursor:pointer;">
+                <h3>🧬 Character Creation</h3>
+                <p>Create a new starter character JSON in-app</p>
+            </div>
             <div class="feature" id="whatToRollFeature" style="cursor:pointer;">
                 <h3>📊 What do I roll?</h3>
                 <p>Find out what influences your roll</p>
@@ -27,7 +31,7 @@
         </div>
         
         <div class="btn-group">
-            <button class="btn-secondary" onclick="alert('Tutorial coming soon!')">Learn More</button>
+            <button id="learnMoreBtn" class="btn-secondary">Learn More</button>
             <button id="importBtn" class="btn-secondary">Import JSON</button>
             <button id="exportBtn" class="btn-secondary">Export JSON</button>
             <input id="fileInput" type="file" accept="application/JSON,.json" style="display:none" />

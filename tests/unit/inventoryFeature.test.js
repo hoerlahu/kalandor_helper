@@ -97,4 +97,91 @@ describe('setupInventoryFeature', () => {
       { skill: 'Athletik', note: 'Bonus on steep walls' }
     ]);
   });
+
+  it('does not create a second panel when the inventory tile is clicked while one is already open', () => {
+    window._importedCharacter = { Skills: {}, Attribute: { Basiswert: {} } };
+
+    setupInventoryFeature(vi.fn(), (s) => String(s));
+    document.getElementById('inventoryFeature').click();
+    document.getElementById('inventoryFeature').click();
+
+    expect(document.querySelectorAll('#inventoryPanel').length).toBe(1);
+  });
+
+  it('renders existing inventory items when the panel opens', () => {
+    window._importedCharacter = {
+      Skills: {},
+      Attribute: { Basiswert: {} },
+      inventory: {
+        items: [{ name: 'Sword', quantity: '1', description: 'Sharp blade', skillNotes: [] }]
+      }
+    };
+
+    setupInventoryFeature(vi.fn(), (s) => String(s));
+    document.getElementById('inventoryFeature').click();
+
+    expect(document.getElementById('inventoryContent').textContent).toContain('Sword');
+  });
+
+  it('edit button populates the form and Save updates the item in place without duplicating it', () => {
+    window._importedCharacter = {
+      Skills: {},
+      Attribute: { Basiswert: {} },
+      inventory: {
+        items: [{ name: 'Shield', quantity: '1', description: 'Round shield', skillNotes: [] }]
+      }
+    };
+
+    setupInventoryFeature(vi.fn(), (s) => String(s));
+    document.getElementById('inventoryFeature').click();
+
+    const editButton = document.querySelector('#inventoryContent .btn-secondary');
+    editButton.click();
+
+    expect(document.getElementById('itemName').value).toBe('Shield');
+    expect(document.getElementById('addItemBtn').textContent).toBe('Save');
+
+    document.getElementById('itemName').value = 'Tower Shield';
+    document.getElementById('addItemBtn').click();
+
+    expect(window._importedCharacter.inventory.items).toHaveLength(1);
+    expect(window._importedCharacter.inventory.items[0].name).toBe('Tower Shield');
+  });
+
+  it('delete button removes the item from the character inventory', () => {
+    window._importedCharacter = {
+      Skills: {},
+      Attribute: { Basiswert: {} },
+      inventory: {
+        items: [
+          { name: 'Sword', quantity: '1', description: '', skillNotes: [] },
+          { name: 'Shield', quantity: '1', description: '', skillNotes: [] }
+        ]
+      }
+    };
+
+    setupInventoryFeature(vi.fn(), (s) => String(s));
+    document.getElementById('inventoryFeature').click();
+
+    // Each item renders [Edit, Delete]. Index 1 is Delete for the first item.
+    const allButtons = document.querySelectorAll('#inventoryContent .btn-secondary');
+    allButtons[1].click();
+
+    expect(window._importedCharacter.inventory.items).toHaveLength(1);
+    expect(window._importedCharacter.inventory.items[0].name).toBe('Shield');
+  });
+
+  it('does not add an item when the name field is empty', () => {
+    window._importedCharacter = { Skills: {}, Attribute: { Basiswert: {} } };
+
+    setupInventoryFeature(vi.fn(), (s) => String(s));
+    document.getElementById('inventoryFeature').click();
+
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemQty').value = '1';
+    document.getElementById('addItemBtn').click();
+
+    const items = window._importedCharacter.inventory?.items || [];
+    expect(items).toHaveLength(0);
+  });
 });

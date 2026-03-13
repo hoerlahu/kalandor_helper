@@ -1,6 +1,7 @@
 import { setupWhatToRollFeature } from './whatToRollFeature.js';
 import { setupImportExportFeature } from './importExportFeature.js';
 import { setupInventoryFeature } from './inventoryFeature.js';
+import { setupCharacterCreationFeature } from './characterCreationFeature.js';
 
 const DEBUG_FLAG_KEY = 'kalandor_debugMode';
 window._config = {};
@@ -17,8 +18,9 @@ if (debugToggle) {
 }
 
 const importResult = document.getElementById('importResult');
+const learnMoreButton = document.getElementById('learnMoreBtn');
 
-function showMessage(html, isError) {
+export function showMessage(html, isError) {
     if (!importResult) return;
 
     const styles = isError
@@ -28,7 +30,7 @@ function showMessage(html, isError) {
     importResult.innerHTML = `<div style="padding:12px;border-radius:6px;${styles}">${html}</div>`;
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
     const entityMap = {
         '&': '&amp;',
         '<': '&lt;',
@@ -56,6 +58,30 @@ function loadConfig() {
         });
 }
 
+function loadReadme() {
+    return fetch('USER_GUIDE.html')
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('USER_GUIDE.html could not be loaded.');
+            }
+            return response.text();
+        })
+        .then((guideHtml) => {
+            const header = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;">` +
+                `<button id="learnMoreCloseBtn" class="btn-secondary" type="button">Close</button></div>`;
+            showMessage(header + guideHtml, false);
+            const closeBtn = importResult.querySelector('#learnMoreCloseBtn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    importResult.innerHTML = '';
+                });
+            }
+        })
+        .catch((error) => {
+            showMessage(escapeHtml(error.message || 'Failed to load user guide.'), true);
+        });
+}
+
 loadConfig().then(() => {
     if (!window._debugMode) return;
 
@@ -65,6 +91,13 @@ loadConfig().then(() => {
     );
 });
 
+if (learnMoreButton) {
+    learnMoreButton.addEventListener('click', () => {
+        loadReadme();
+    });
+}
+
 setupWhatToRollFeature(showMessage, escapeHtml);
 setupImportExportFeature(showMessage, escapeHtml);
 setupInventoryFeature(showMessage, escapeHtml);
+setupCharacterCreationFeature(showMessage, escapeHtml);

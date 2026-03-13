@@ -151,4 +151,15 @@ describe('setupImportExportFeature', () => {
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:test-url');
     expect(showMessage).toHaveBeenCalledWith('Character exported successfully!', false);
   });
+
+  it('does nothing when the file input change event fires with no file selected', () => {
+    setupImportExportFeature(showMessage, escapeHtml);
+
+    const fileInput = document.getElementById('fileInput');
+    Object.defineProperty(fileInput, 'files', { value: [], configurable: true });
+    fileInput.dispatchEvent(new Event('change'));
+
+    expect(window._importedCharacter).toBeUndefined();
+    expect(showMessage).not.toHaveBeenCalled();
+  });
 });
