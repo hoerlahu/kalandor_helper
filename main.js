@@ -18,6 +18,7 @@ if (debugToggle) {
 }
 
 const importResult = document.getElementById('importResult');
+const learnMoreButton = document.getElementById('learnMoreBtn');
 
 function showMessage(html, isError) {
     if (!importResult) return;
@@ -57,6 +58,25 @@ function loadConfig() {
         });
 }
 
+function loadReadme() {
+    return fetch('README.md')
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('README.md could not be loaded.');
+            }
+            return response.text();
+        })
+        .then((readmeText) => {
+            showMessage(
+                `<pre style="text-align:left;white-space:pre-wrap;">${escapeHtml(readmeText)}</pre>`,
+                false
+            );
+        })
+        .catch((error) => {
+            showMessage(escapeHtml(error.message || 'Failed to load README.md.'), true);
+        });
+}
+
 loadConfig().then(() => {
     if (!window._debugMode) return;
 
@@ -65,6 +85,12 @@ loadConfig().then(() => {
         false
     );
 });
+
+if (learnMoreButton) {
+    learnMoreButton.addEventListener('click', () => {
+        loadReadme();
+    });
+}
 
 setupWhatToRollFeature(showMessage, escapeHtml);
 setupImportExportFeature(showMessage, escapeHtml);
