@@ -70,11 +70,11 @@ describe('setupCharacterCreationFeature', () => {
     expect(window._importedCharacter.Attribute.Punkte.Willenskraft).toBe(4);
     expect(window._importedCharacter.Skills.Ausbildung.Körperlich.Athletik).toBe(2);
     expect(window._importedCharacter.Skills.Ausbildung.Kampf['Äxte']).toBe(3);
-    expect(window._importedCharacter.Skills.Disziplinen).toEqual([
-      { key: 'Feuerzauber', value: 2 },
-      { key: 'Schmiedekunst', value: 1 },
-      { key: 'Überleben', value: 3 }
-    ]);
+    expect(window._importedCharacter.Skills.Disziplinen).toEqual({
+      Feuerzauber: 2,
+      Schmiedekunst: 1,
+      Überleben: 3
+    });
     expect(window._importedCharacter.inventory.items).toEqual([]);
     expect(showMessage).toHaveBeenCalledWith(
       'Character created successfully! You can now use Inventory, What do I roll, or Export JSON.',

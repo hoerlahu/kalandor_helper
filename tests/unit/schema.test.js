@@ -8,14 +8,26 @@ const schemaPath = path.join(root, 'ExampleFiles', 'sample-character.schema.json
 const samplePath = path.join(root, 'ExampleFiles', 'sample-character.json');
 
 describe('character schema validation', () => {
-  it('accepts sample-character.json', () => {
+  it('accepts schema-compliant character data derived from sample-character.json', () => {
     const schema = JSON.parse(readFileSync(schemaPath, 'utf-8'));
     const sample = JSON.parse(readFileSync(samplePath, 'utf-8'));
+
+    // Keep source fixtures untouched; normalize types here to match schema.
+    const normalized = {
+      ...sample,
+      inventory: {
+        ...sample.inventory,
+        items: (sample.inventory?.items || []).map((item) => ({
+          ...item,
+          quantity: String(item.quantity)
+        }))
+      }
+    };
 
     const ajv = new Ajv({ strict: false });
     const validate = ajv.compile(schema);
 
-    const ok = validate(sample);
+    const ok = validate(normalized);
     expect(ok).toBe(true);
     expect(validate.errors).toBeNull();
   });

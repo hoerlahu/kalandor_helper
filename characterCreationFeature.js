@@ -142,7 +142,7 @@ function defaultCharacter() {
 		},
 		Skills: {
 			Ausbildung: ausbildung,
-			Disziplinen: []
+			Disziplinen: {}
 		},
 		inventory: {
 			items: []
@@ -187,7 +187,7 @@ function buildCharacterFromForm(panel) {
 		});
 	});
 
-	character.Skills.Disziplinen = [];
+	character.Skills.Disziplinen = {};
 	DEFAULT_DISZIPLINEN.forEach((_, index) => {
 		const keyInput = panel.querySelector(`#disziplin-key-${index}`);
 		const valueInput = panel.querySelector(`#disziplin-value-${index}`);
@@ -195,10 +195,7 @@ function buildCharacterFromForm(panel) {
 		const key = keyInput ? keyInput.value.trim() : '';
 		if (!key) return;
 
-		character.Skills.Disziplinen.push({
-			key,
-			value: parseInteger(valueInput ? valueInput.value : '', 0)
-		});
+		character.Skills.Disziplinen[key] = parseInteger(valueInput ? valueInput.value : '', 0);
 	});
 
 	return character;
