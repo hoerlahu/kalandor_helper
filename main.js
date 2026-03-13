@@ -2,88 +2,69 @@ import { setupWhatToRollFeature } from './whatToRollFeature.js';
 import { setupImportExportFeature } from './importExportFeature.js';
 import { setupInventoryFeature } from './inventoryFeature.js';
 
-// Global debug flag with persistence
-const debugFlagKey = 'kalandor_debugMode';
-// Read from localStorage, default to false if not set
-window._debugMode = localStorage.getItem(debugFlagKey) === 'true';
+const DEBUG_FLAG_KEY = 'kalandor_debugMode';
+window._config = {};
+window._debugMode = localStorage.getItem(DEBUG_FLAG_KEY) === 'true';
+
 const debugToggle = document.getElementById('debugModeToggle');
 if (debugToggle) {
     debugToggle.checked = window._debugMode;
-    debugToggle.addEventListener('change', function() {
+    debugToggle.addEventListener('change', function onDebugToggleChange() {
         window._debugMode = this.checked;
-        localStorage.setItem(debugFlagKey, window._debugMode);
-        if (window._debugMode) {
-            console.log('[DEBUG] Debug mode enabled');
-        } else {
-            console.log('[DEBUG] Debug mode disabled');
-        }
+        localStorage.setItem(DEBUG_FLAG_KEY, String(window._debugMode));
+        console.log(window._debugMode ? '[DEBUG] Debug mode enabled' : '[DEBUG] Debug mode disabled');
     });
 }
 
-// default configuration – can be overridden by config.json
-window._config = {};
+const importResult = document.getElementById('importResult');
 
-    // try to load external config file automatically; no user action required
-    function loadConfig() {
-        return fetch('config.json')
-            .then(resp => {
-                if (!resp.ok) return null; // file not found or error
-                return resp.json();
-            })
-            .then(data => {
-                if (data) {
-                    // shallow merge – expand as needed
-                    window._config = { ...window._config, ...data };
-                }
-            })
-            .catch(() => {
-                // ignore failures – we'll just use defaults
-            });
-    }
+function showMessage(html, isError) {
+    if (!importResult) return;
 
-    const importResult = document.getElementById('importResult');
+    const styles = isError
+        ? 'background:#ffe6e6;border:1px solid #ffb3b3;color:#800;'
+        : 'background:#f1f8ff;border:1px solid #cfe6ff;color:#033;';
 
-    // load configuration early and then show its contents
-    loadConfig().then(() => {
-        // show config in message area only if debugging is enabled
-        if (window._debugMode) {
-            showMessage('<pre style="text-align:left;white-space:pre-wrap;">' +
-                escapeHtml(JSON.stringify(window._config, null, 2)) + '</pre>', false);
-        }
-    });
+    importResult.innerHTML = `<div style="padding:12px;border-radius:6px;${styles}">${html}</div>`;
+}
 
-    function showMessage(html, isError) {
-        importResult.innerHTML =
-            '<div style="padding:12px;border-radius:6px;'+
-            (isError
-                ? 'background:#ffe6e6;border:1px solid #ffb3b3;color:#800;'
-                : 'background:#f1f8ff;border:1px solid #cfe6ff;color:#033;') +
-            '">'+ html + '</div>';
-    }
+function escapeHtml(value) {
+    const entityMap = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    };
 
-    // import/export and file handling logic has been moved to importExportFeature.js
+    const normalized = typeof value === 'string' ? value : String(value ?? '');
+    return normalized.replace(/[&<>"']/g, (character) => entityMap[character]);
+}
 
-// displayRollInfo has been moved into whatToRollFeature.js
-
-    function escapeHtml(s) {
-        const entityMap = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-        };
-        if (typeof s !== 'string') s = String(s ?? '');
-        return s.replace(/[&<>"']/g, function(c) {
-            return entityMap[c];
+function loadConfig() {
+    return fetch('config.json')
+        .then((response) => {
+            if (!response.ok) return null;
+            return response.json();
+        })
+        .then((data) => {
+            if (!data) return;
+            window._config = { ...window._config, ...data };
+        })
+        .catch(() => {
+            // Fallback to default in-memory config if config.json is unavailable.
         });
-    }
+}
 
+loadConfig().then(() => {
+    if (!window._debugMode) return;
 
+    showMessage(
+        `<pre style="text-align:left;white-space:pre-wrap;">${escapeHtml(JSON.stringify(window._config, null, 2))}</pre>`,
+        false
+    );
+});
 
-// initialize extracted features after helpers are available
 setupWhatToRollFeature(showMessage, escapeHtml);
 setupImportExportFeature(showMessage, escapeHtml);
-
-// initialize inventory feature
 setupInventoryFeature(showMessage, escapeHtml);

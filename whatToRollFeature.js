@@ -8,8 +8,8 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         if (level4) roll = level4;
         const selectedSkill = level4 || level3 || level2;
 
-        let config = window._config;
-        if(!config[roll]){
+        const config = window._config || {};
+        if (!config[roll]) {
             // If no specific config for the selected roll, try to use __DEFAULT__ config if available
             roll = "__DEFAULT__";
         }
@@ -87,7 +87,6 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const supportedRoll = 'Skills'; // we focus on Skills section for roll selection
         const rollSelector = document.getElementById('rollSelector');
         const charData = window._importedCharacter;
-        const parentKeys = Object.keys(charData).filter(k => k == supportedRoll); // exclude Allgemein and Attribute sections from roll selection
 
         // Create HTML for dropdowns
         let html = '<div style="padding:12px;border-radius:6px;background:#f1f8ff;border:1px solid #cfe6ff;">';
@@ -268,7 +267,6 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 return;
             }
 
-            const value = charData[selectedParent][selectedChild][selectedGrandchild][selectedGreatgrandchild];
             rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild,selectedGreatgrandchild) + '</strong>';
         });
     });

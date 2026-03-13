@@ -1,496 +1,356 @@
-export function setupInventoryFeature(showMessage, escapeHtml) {
-    const inv = document.getElementById('inventoryFeature');
-    const inventoryKey = "inventory"; // key to look for in the character data; can be customized or expanded as needed
-    if (!inv) return; // nothing to do in non-browser environments or during tests
+function findInventorySection(obj, inventoryKey) {
+    if (!obj || typeof obj !== 'object') return null;
+    if (Object.prototype.hasOwnProperty.call(obj, inventoryKey)) {
+        return obj[inventoryKey];
+    }
 
-    inv.addEventListener('click', () => {
-        // create or show an inventory panel inside the container
+    for (const key in obj) {
+        if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+        const value = obj[key];
+        if (typeof value === 'object' && value !== null) {
+            const result = findInventorySection(value, inventoryKey);
+            if (result !== null) return result;
+        }
+    }
+
+    return null;
+}
+
+function getInventoryItems(section) {
+    if (section && Array.isArray(section.items)) return section.items;
+    if (Array.isArray(section)) return section;
+    return [];
+}
+
+function ensureInventoryItemsArray(character, inventoryKey) {
+    if (!character[inventoryKey]) {
+        character[inventoryKey] = {};
+    }
+    if (!Array.isArray(character[inventoryKey].items)) {
+        character[inventoryKey].items = [];
+    }
+    return character[inventoryKey].items;
+}
+
+function collectNestedKeys(obj, options, prefix = '', depth = 1) {
+    const { includeSecondLevel = false, includeFirstLevel = false } = options;
+    const keys = [];
+
+    for (const key in obj) {
+        if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
+        const value = obj[key];
+        const display = prefix ? `${prefix} > ${key}` : key;
+
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            if (includeFirstLevel && depth === 1) {
+                keys.push(display);
+            }
+            if (includeSecondLevel && depth === 2) {
+                keys.push(display);
+            }
+            keys.push(...collectNestedKeys(value, options, display, depth + 1));
+        } else {
+            keys.push(display);
+        }
+    }
+
+    return keys;
+}
+
+function buildItemHtml(item, escapeHtml) {
+    const skillNotesHtml = item.skillNotes && item.skillNotes.length
+        ? `<div class="muted">${item.skillNotes
+            .map((s) => `<div class="skill-chip">${escapeHtml(s.skill)}${s.note ? ` - ${escapeHtml(s.note)}` : ''}</div>`)
+            .join('')}</div>`
+        : '';
+
+    return `<strong>${escapeHtml(item.name)}</strong>${
+        item.quantity ? ` x${escapeHtml(item.quantity)}` : ''
+    }${
+        item.description ? `<div class="muted">${escapeHtml(item.description)}</div>` : ''
+    }${skillNotesHtml}`;
+}
+
+export function setupInventoryFeature(showMessage, escapeHtml) {
+    void showMessage;
+
+    const inventoryFeature = document.getElementById('inventoryFeature');
+    const inventoryKey = 'inventory';
+    if (!inventoryFeature) return;
+
+    inventoryFeature.addEventListener('click', () => {
         const container = document.querySelector('.container') || document.body;
         let panel = document.getElementById('inventoryPanel');
-        if (!panel) {
-            panel = document.createElement('div');
-            panel.id = 'inventoryPanel';
-            panel.className = 'inventory-panel';
+        if (panel) return;
 
-            panel.innerHTML = `
-                <div class="inventory-header">
-                    <h2>🎒 Inventory</h2>
-                    <button id="inventoryClose" class="btn-secondary">Close</button>
+        panel = document.createElement('div');
+        panel.id = 'inventoryPanel';
+        panel.className = 'inventory-panel';
+        panel.innerHTML = `
+            <div class="inventory-header">
+                <h2>Inventory</h2>
+                <button id="inventoryClose" class="btn-secondary" type="button">Close</button>
+            </div>
+            <div id="inventoryContent" class="inventory-content">
+                <p class="muted">Loading inventory...</p>
+            </div>
+            <div class="inventory-actions">
+                <div class="ia-row ia-name">
+                    <input id="itemName" placeholder="Name" />
                 </div>
-                <div id="inventoryContent" class="inventory-content">
-                    <p class="muted">Loading inventory...</p>
+                <div class="ia-row ia-qty">
+                    <input id="itemQty" placeholder="Quantity" style="width:120px;" />
                 </div>
-                <div class="inventory-actions">
-                    <div class="ia-row ia-name">
-                        <input id="itemName" placeholder="Name" />
-                    </div>
-                    <div class="ia-row ia-qty">
-                        <input id="itemQty" placeholder="Quantity" style="width:120px;" />
-                    </div>
-                    <div class="ia-row ia-skill-entry">
-                        <select id="itemSkillSelect" style="min-width:200px;"></select>
-                        <input id="itemSkillNoteText" placeholder="Skill note" />
-                        <button id="addSkillBtn" class="btn-secondary" type="button">Add Skill</button>
-                    </div>
-                    <div id="itemSkillList" class="skill-list"></div>
-                    <div class="ia-row ia-desc">
-                        <input id="itemDesc" placeholder="Description" style="flex:1; margin-right:8px;" />
-                    </div>
-                    <div class="ia-row ia-add">
-                        <button id="addItemBtn" class="btn-primary" style="width:100%;">Add</button>
-                    </div>
+                <div class="ia-row ia-skill-entry">
+                    <select id="itemSkillSelect" style="min-width:200px;"></select>
+                    <input id="itemSkillNoteText" placeholder="Skill note" />
+                    <button id="addSkillBtn" class="btn-secondary" type="button">Add Skill</button>
                 </div>
-            `;
+                <div id="itemSkillList" class="skill-list"></div>
+                <div class="ia-row ia-desc">
+                    <input id="itemDesc" placeholder="Description" style="flex:1; margin-right:8px;" />
+                </div>
+                <div class="ia-row ia-add">
+                    <button id="addItemBtn" class="btn-primary" type="button" style="width:100%;">Add</button>
+                </div>
+            </div>
+        `;
+        container.appendChild(panel);
 
-            container.appendChild(panel);
+        const closeButton = panel.querySelector('#inventoryClose');
+        const content = panel.querySelector('#inventoryContent');
+        const itemNameInput = panel.querySelector('#itemName');
+        const itemQtyInput = panel.querySelector('#itemQty');
+        const itemDescInput = panel.querySelector('#itemDesc');
+        const itemSkillSelect = panel.querySelector('#itemSkillSelect');
+        const itemSkillNoteInput = panel.querySelector('#itemSkillNoteText');
+        const addSkillButton = panel.querySelector('#addSkillBtn');
+        const addItemButton = panel.querySelector('#addItemBtn');
+        const skillListContainer = panel.querySelector('#itemSkillList');
 
-            // wire up close
-            panel.querySelector('#inventoryClose').addEventListener('click', () => {
-                panel.remove();
-            });
+        let currentSkillPairs = [];
+        let editingItemRef = null;
 
-            // add item behavior (structured fields)
-            const addBtn = panel.querySelector('#addItemBtn');
-            const content = panel.querySelector('#inventoryContent');
-            const inName = panel.querySelector('#itemName');
-            const inQty = panel.querySelector('#itemQty');
-            const inDesc = panel.querySelector('#itemDesc');
-            const inSkillSelect = panel.querySelector('#itemSkillSelect');
-            const inSkillNote = panel.querySelector('#itemSkillNoteText');
-            const addSkillBtn = panel.querySelector('#addSkillBtn');
-            const skillListDiv = panel.querySelector('#itemSkillList');
-            // in-memory list of {skill, note} pairs for the item being edited/created
-            let currentSkillPairs = [];
-            let editingItemRef = null;
+        function renderSkillList() {
+            skillListContainer.innerHTML = '';
+            if (!currentSkillPairs.length) return;
 
-            function setEditingItem(item) {
-                editingItemRef = item;
-                if (addBtn) addBtn.textContent = 'Save';
-            }
+            const list = document.createElement('ul');
+            list.className = 'skill-pairs';
 
-            function clearEditingItem() {
-                editingItemRef = null;
-                if (addBtn) addBtn.textContent = 'Add';
-            }
+            currentSkillPairs.forEach((pair, index) => {
+                const item = document.createElement('li');
+                item.innerHTML = `<strong>${escapeHtml(pair.skill)}</strong>${pair.note ? ` - ${escapeHtml(pair.note)}` : ''}`;
 
-            function renderSkillList() {
-                skillListDiv.innerHTML = '';
-                if (!currentSkillPairs || !currentSkillPairs.length) return;
-                const ul = document.createElement('ul');
-                ul.className = 'skill-pairs';
-                currentSkillPairs.forEach((p, idx) => {
-                    const li = document.createElement('li');
-                    li.innerHTML = '<strong>' + escapeHtml(p.skill) + '</strong>' + (p.note ? ' — ' + escapeHtml(p.note) : '');
-                    const btn = document.createElement('button');
-                    btn.textContent = 'Remove';
-                    btn.className = 'btn-secondary';
-                    btn.style.marginLeft = '8px';
-                    btn.addEventListener('click', () => {
-                        currentSkillPairs.splice(idx, 1);
-                        renderSkillList();
-                    });
-                    li.appendChild(btn);
-                    ul.appendChild(li);
+                const removeButton = document.createElement('button');
+                removeButton.textContent = 'Remove';
+                removeButton.className = 'btn-secondary';
+                removeButton.style.marginLeft = '8px';
+                removeButton.addEventListener('click', () => {
+                    currentSkillPairs.splice(index, 1);
+                    renderSkillList();
                 });
-                skillListDiv.appendChild(ul);
-            }
 
-            addSkillBtn.addEventListener('click', () => {
-                const sk = inSkillSelect && inSkillSelect.value;
-                const note = inSkillNote && inSkillNote.value && inSkillNote.value.trim();
-                if (!sk) return; // nothing selected
-                // Only keep the lowest node of the skill path
-                const lowestSkill = sk.includes('>') ? sk.split('>').pop().trim() : sk.trim();
-                currentSkillPairs.push({ skill: lowestSkill, note: note || '' });
-                renderSkillList();
-                // clear note input
-                if (inSkillNote) inSkillNote.value = '';
-                if (inSkillSelect) inSkillSelect.selectedIndex = 0;
+                item.appendChild(removeButton);
+                list.appendChild(item);
             });
 
-            // separate container for imported character inventory display
-            const importedContainer = document.createElement('div');
-            importedContainer.id = 'importedInventory';
+            skillListContainer.appendChild(list);
+        }
+
+        function clearEditorState() {
+            editingItemRef = null;
+            addItemButton.textContent = 'Add';
+            itemNameInput.value = '';
+            itemQtyInput.value = '';
+            itemDescInput.value = '';
+            itemSkillNoteInput.value = '';
+            itemSkillSelect.selectedIndex = 0;
+            currentSkillPairs = [];
+            renderSkillList();
+        }
+
+        function setEditorState(item) {
+            editingItemRef = item;
+            addItemButton.textContent = 'Save';
+            itemNameInput.value = item.name || '';
+            itemQtyInput.value = item.quantity || '';
+            itemDescInput.value = item.description || '';
+            currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
+            renderSkillList();
+        }
+
+        function removeItemFromCharacter(item) {
+            const character = window._importedCharacter;
+            if (!character) return;
+
+            const items = ensureInventoryItemsArray(character, inventoryKey);
+            const byReferenceIndex = items.indexOf(item);
+            if (byReferenceIndex !== -1) {
+                items.splice(byReferenceIndex, 1);
+                return;
+            }
+
+            const fallbackIndex = items.findIndex((entry) =>
+                entry && entry.name === item.name && String(entry.quantity) === String(item.quantity)
+            );
+            if (fallbackIndex !== -1) {
+                items.splice(fallbackIndex, 1);
+            }
+        }
+
+        function renderImportedInventory() {
             content.innerHTML = '';
-            content.appendChild(importedContainer);
+            const character = window._importedCharacter;
 
-            function renderManualList() {
-                const ul = content.querySelector('ul.manual') || (function(){
-                    const u = document.createElement('ul');
-                    u.className = 'manual';
-                    // if content already has other lists, append after them
-                    content.appendChild(u);
-                    return u;
-                })();
-                return ul;
-            }
-
-            function updateImportedInventoryDisplay() {
-                importedContainer.innerHTML = '';
-                const data = window._importedCharacter;
-                if (!data) {
-                    importedContainer.innerHTML = '<p class="muted">No character imported. Please import a character to view the inventory.</p>';
-                    return;
-                }
-                const itemsObj = findInventory(data);
-                let items = [];
-                if (itemsObj && Array.isArray(itemsObj.items)) {
-                    items = itemsObj.items;
-                } else if (Array.isArray(itemsObj)) {
-                    items = itemsObj;
-                }
-                importedContainer.innerHTML = '<h3>Inventory</h3>';
-                if (!items.length) {
-                    importedContainer.innerHTML += '<p class="muted">No inventory section found in the imported character. Added items will be stored under "' + escapeHtml(inventoryKey) + '".</p>';
-                    return;
-                }
-                // Render each item as editable/deletable row
-                const ul = document.createElement('ul');
-                ul.className = 'manual';
-                items.forEach(item => {
-                    const li = document.createElement('li');
-                    li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
-                        (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
-                        (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
-                        (item.skillNotes && item.skillNotes.length ? '<div class="muted">' + item.skillNotes.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
-
-                    // add controls
-                    const controls = document.createElement('span');
-                    controls.style.marginLeft = '12px';
-                    const editBtn = document.createElement('button');
-                    editBtn.textContent = 'Edit';
-                    editBtn.className = 'btn-secondary';
-                    editBtn.style.marginRight = '6px';
-                    const delBtn = document.createElement('button');
-                    delBtn.textContent = 'Delete';
-                    delBtn.className = 'btn-secondary';
-                    controls.appendChild(editBtn);
-                    controls.appendChild(delBtn);
-                    li.appendChild(controls);
-
-                    // wire delete: remove from imported character inventory.items array if exists
-                    delBtn.addEventListener('click', () => {
-                        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
-                            const arr = window._importedCharacter[inventoryKey].items;
-                            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
-                            if (idx !== -1) arr.splice(idx, 1);
-                            updateImportedInventoryDisplay();
-                        }
-                        li.remove();
-                    });
-
-                    // wire edit: prefill inputs and remove this li; on add it will re-persist
-                    editBtn.addEventListener('click', () => {
-                        inName.value = item.name;
-                        inQty.value = item.quantity || '';
-                        inDesc.value = item.description || '';
-                        currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
-                        renderSkillList();
-                        setEditingItem(item);
-                    });
-
-                    ul.appendChild(li);
-                });
-                importedContainer.appendChild(ul);
-            }
-
-            // show current imported inventory on open
-            updateImportedInventoryDisplay();
-
-            addBtn.addEventListener('click', () => {
-                const name = inName.value && inName.value.trim();
-                if (!name) return;
-                const item = {
-                    name: name,
-                    quantity: inQty.value ? inQty.value.trim() : '',
-                    description: inDesc.value ? inDesc.value.trim() : '',
-                    skillNotes: Array.isArray(currentSkillPairs) ? currentSkillPairs.slice() : []
-                };
-
-                const isEditing = !!editingItemRef;
-
-                if (!isEditing) {
-                    const ul = renderManualList();
-                    const li = document.createElement('li');
-                    li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
-                        (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
-                        (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
-                        (item.skillNotes && item.skillNotes.length ? '<div class="muted">' + item.skillNotes.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
-
-                    // add controls
-                    const controls = document.createElement('span');
-                    controls.style.marginLeft = '12px';
-                    const editBtn = document.createElement('button');
-                    editBtn.textContent = 'Edit';
-                    editBtn.className = 'btn-secondary';
-                    editBtn.style.marginRight = '6px';
-                    const delBtn = document.createElement('button');
-                    delBtn.textContent = 'Delete';
-                    delBtn.className = 'btn-secondary';
-                    controls.appendChild(editBtn);
-                    controls.appendChild(delBtn);
-                    li.appendChild(controls);
-
-            // wire delete: remove from UI and importedCharacter if present
-                    delBtn.addEventListener('click', () => {
-                        // remove from imported character inventory.items array if exists
-                        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
-                            const arr = window._importedCharacter[inventoryKey].items;
-                            // find an entry matching name+quantity+description roughly
-                            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
-                            if (idx !== -1) arr.splice(idx, 1);
-                            updateImportedInventoryDisplay();
-                        }
-                        if (editingItemRef === item) {
-                            clearEditingItem();
-                        }
-                        li.remove();
-                    });
-
-                    // wire edit: prefill inputs; only save updates after confirm
-                    editBtn.addEventListener('click', () => {
-                        inName.value = item.name;
-                        inQty.value = item.quantity || '';
-                        inDesc.value = item.description || '';
-                        currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
-                        renderSkillList();
-                        setEditingItem(item);
-                    });
-
-                    ul.appendChild(li);
-                }
-
-                if (isEditing && editingItemRef) {
-                    editingItemRef.name = item.name;
-                    editingItemRef.quantity = item.quantity;
-                    editingItemRef.description = item.description;
-                    editingItemRef.skillNotes = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
-                }
-
-                // clear inputs
-                inName.value = '';
-                inQty.value = '';
-                inDesc.value = '';
-                if (inSkillSelect) inSkillSelect.selectedIndex = 0;
-                if (inSkillNote) inSkillNote.value = '';
-                // clear all skills/notes for next item
-                currentSkillPairs = [];
-                renderSkillList();
-                // persist into imported character if present
-                if (window._importedCharacter) {
-                    // Always use inventory.items array for storing items
-                    if (!window._importedCharacter[inventoryKey]) {
-                        window._importedCharacter[inventoryKey] = {};
-                    }
-                    if (!Array.isArray(window._importedCharacter[inventoryKey].items)) {
-                        window._importedCharacter[inventoryKey].items = [];
-                    }
-                    if (!isEditing) {
-                        window._importedCharacter[inventoryKey].items.push({
-                            name: item.name,
-                            quantity: item.quantity,
-                            description: item.description,
-                            skillNotes: Array.isArray(item.skillNotes) ? item.skillNotes.slice() : []
-                        });
-                    }
-                    // refresh imported inventory display
-                    updateImportedInventoryDisplay();
-                }
-
-                if (isEditing) {
-                    clearEditingItem();
-                }
-            });
-
-            // populate skills select from imported character (flatten nested Skills)
-            function populateSkills() {
-                if (!inSkillSelect) return;
-                inSkillSelect.innerHTML = '<option value="">(no skill)</option>';
-                const charData = window._importedCharacter;
-                if (!charData || !charData.Skills) return;
-                const parentData = charData.Skills;
-                const optionValues = new Set();
-                function collectKeys(obj, prefix = '', depth = 1, includeSecondLevel = false, includeFirstLevel = false) {
-                    const keys = [];
-                    for (const k in obj) {
-                        if (!Object.prototype.hasOwnProperty.call(obj, k)) continue;
-                        const v = obj[k];
-                        const display = prefix ? (prefix + ' > ' + k) : k;
-                        if (typeof v === 'object' && v !== null && !Array.isArray(v)) {
-                            if (includeSecondLevel && depth === 2) {
-                                keys.push(display);
-                            }
-                            if(includeFirstLevel && depth === 1) {
-                                keys.push(display);
-                            }
-                            keys.push(...collectKeys(v, display, depth + 1, includeSecondLevel, includeFirstLevel));
-                        } else {
-                            keys.push(display);
-                        }
-                    }
-                    return keys;
-                }
-                
-                const skillKeys = Array.from(new Set(collectKeys(parentData, '', 1, true, true)));
-                const metaSkillKeys = [];
-                if (window._config) {
-                    Object.keys(window._config).forEach(k => {
-                        const v = window._config[k];
-                        if (v && typeof v === 'object' && v.MetaSkill === true) {
-                            metaSkillKeys.push(k);
-                        }
-                    });
-                }
-                skillKeys.forEach(sk => {
-                    if (optionValues.has(sk)) return;
-                    optionValues.add(sk);
-                    const opt = document.createElement('option');
-                    opt.value = sk;
-                    opt.textContent = sk;
-                    inSkillSelect.appendChild(opt);
-                });
-                metaSkillKeys.forEach(ms => {
-                    if (optionValues.has(ms)) return;
-                    optionValues.add(ms);
-                    const opt = document.createElement('option');
-                    opt.value = ms;
-                    opt.textContent = ms;
-                    inSkillSelect.appendChild(opt);
-                });
-                const attributes = charData.Attribute.Basiswert;                
-                const attributeKeys = collectKeys(attributes);
-                attributeKeys.forEach(att => {
-                    if (optionValues.has(att)) return;
-                    optionValues.add(att);
-                    const opt = document.createElement('option');
-                    opt.value = att;
-                    opt.textContent = att;
-                    inSkillSelect.appendChild(opt);
-                });
-            }
-
-            // populate skills on open and whenever imported inventory display updates
-            populateSkills();
-
-            // allow Enter key to add when focused on any of the add-item inputs
-            const addFields = panel.querySelectorAll('.inventory-actions input');
-            addFields.forEach(f => {
-                if (f.type === 'checkbox') return; // skip checkbox
-                f.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.preventDefault();
-                        addBtn.click();
-                    }
-                });
-            });
-
-            // helper to render nested objects/arrays into HTML
-            function renderObj(obj, depth = 0) {
-                if (obj === null || obj === undefined) return '';
-                if (typeof obj !== 'object') {
-                    return '<span>' + escapeHtml(String(obj)) + '</span>';
-                }
-                let html = '<ul style="margin-left:' + (depth * 20) + 'px;">';
-                if (Array.isArray(obj)) {
-                    for (const item of obj) {
-                        html += '<li>' + renderObj(item, depth + 1) + '</li>';
-                    }
-                } else {
-                    for (const key in obj) {
-                        if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                            html += '<li><strong>' + escapeHtml(key) + ':</strong> ' + renderObj(obj[key], depth + 1) + '</li>';
-                        }
-                    }
-                }
-                html += '</ul>';
-                return html;
-            }
-
-            // populate from imported character if available; do NOT auto-load sample files
-            const data = window._importedCharacter;
-
-            // recursive search for inventory keys anywhere in the object
-            function findInventory(obj) {
-                if (!obj || typeof obj !== 'object') return null;
-                if (inventoryKey in obj) return obj[inventoryKey];
-
-                for (const key in obj) {
-                    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-                        const v = obj[key];
-                        if (typeof v === 'object') {
-                            const res = findInventory(v);
-                            if (res !== null) return res;
-                        }
-                    }
-                }
-                return null;
-            }
-
-            if (data) {
-                const itemsObj = findInventory(data);
-let items = [];
-if (itemsObj && Array.isArray(itemsObj.items)) {
-    items = itemsObj.items;
-} else if (Array.isArray(itemsObj)) {
-    items = itemsObj;
-}
-importedContainer.innerHTML = '<h3>Inventory</h3>';
-if (!items.length) {
-    importedContainer.innerHTML += '<p class="muted">No inventory section found in the imported character. Added items will be stored under "' + escapeHtml(inventoryKey) + '".</p>';
-    return;
-}
-// Render each item as editable/deletable row
-const ul = document.createElement('ul');
-ul.className = 'manual';
-items.forEach(item => {
-    const li = document.createElement('li');
-    li.innerHTML = '<strong>' + escapeHtml(item.name) + '</strong>' +
-        (item.quantity ? ' x' + escapeHtml(item.quantity) : '') +
-        (item.description ? '<div class="muted">' + escapeHtml(item.description) + '</div>' : '') +
-        (item.skillNotes && item.skillNotes.length ? '<div class="muted">' + item.skillNotes.map(s => '<div class="skill-chip">' + escapeHtml(s.skill) + (s.note ? ' — ' + escapeHtml(s.note) : '') + '</div>').join('') + '</div>' : '');
-
-    // add controls
-    const controls = document.createElement('span');
-    controls.style.marginLeft = '12px';
-    const editBtn = document.createElement('button');
-    editBtn.textContent = 'Edit';
-    editBtn.className = 'btn-secondary';
-    editBtn.style.marginRight = '6px';
-    const delBtn = document.createElement('button');
-    delBtn.textContent = 'Delete';
-    delBtn.className = 'btn-secondary';
-    controls.appendChild(editBtn);
-    controls.appendChild(delBtn);
-    li.appendChild(controls);
-
-    // wire delete: remove from imported character inventory.items array if exists
-    delBtn.addEventListener('click', () => {
-        if (window._importedCharacter && window._importedCharacter[inventoryKey] && Array.isArray(window._importedCharacter[inventoryKey].items)) {
-            const arr = window._importedCharacter[inventoryKey].items;
-            const idx = arr.findIndex(it => it && it.name === item.name && String(it.quantity) === String(item.quantity));
-            if (idx !== -1) arr.splice(idx, 1);
-            updateImportedInventoryDisplay();
-        }
-        li.remove();
-    });
-
-    // wire edit: prefill inputs and remove this li; on add it will re-persist
-    editBtn.addEventListener('click', () => {
-        inName.value = item.name;
-        inQty.value = item.quantity || '';
-        inDesc.value = item.description || '';
-        currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
-        renderSkillList();
-        setEditingItem(item);
-    });
-
-    ul.appendChild(li);
-});
-importedContainer.appendChild(ul);
-            } else {
-                // no imported character: prompt user to import
+            if (!character) {
                 content.innerHTML = '<p class="muted">No character imported. Please import a character to view the inventory.</p>';
+                return;
             }
+
+            const section = findInventorySection(character, inventoryKey);
+            const items = getInventoryItems(section);
+
+            const heading = document.createElement('h3');
+            heading.textContent = 'Inventory';
+            content.appendChild(heading);
+
+            if (!items.length) {
+                const empty = document.createElement('p');
+                empty.className = 'muted';
+                empty.textContent = `No inventory section found in the imported character. Added items will be stored under "${inventoryKey}".`;
+                content.appendChild(empty);
+                return;
+            }
+
+            const list = document.createElement('ul');
+            list.className = 'manual';
+
+            items.forEach((item) => {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = buildItemHtml(item, escapeHtml);
+
+                const controls = document.createElement('span');
+                controls.style.marginLeft = '12px';
+
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.className = 'btn-secondary';
+                editButton.style.marginRight = '6px';
+                editButton.addEventListener('click', () => setEditorState(item));
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.className = 'btn-secondary';
+                deleteButton.addEventListener('click', () => {
+                    removeItemFromCharacter(item);
+                    if (editingItemRef === item) {
+                        clearEditorState();
+                    }
+                    renderImportedInventory();
+                });
+
+                controls.appendChild(editButton);
+                controls.appendChild(deleteButton);
+                listItem.appendChild(controls);
+                list.appendChild(listItem);
+            });
+
+            content.appendChild(list);
         }
+
+        function populateSkills() {
+            itemSkillSelect.innerHTML = '<option value="">(no skill)</option>';
+
+            const character = window._importedCharacter;
+            if (!character || !character.Skills) return;
+
+            const values = new Set();
+            const skillPaths = Array.from(new Set(
+                collectNestedKeys(character.Skills, { includeSecondLevel: true, includeFirstLevel: true })
+            ));
+
+            const configMetaSkills = [];
+            const config = window._config || {};
+            Object.keys(config).forEach((key) => {
+                const value = config[key];
+                if (value && typeof value === 'object' && value.MetaSkill === true) {
+                    configMetaSkills.push(key);
+                }
+            });
+
+            const attributes = character.Attribute && character.Attribute.Basiswert
+                ? collectNestedKeys(character.Attribute.Basiswert, { includeSecondLevel: false, includeFirstLevel: false })
+                : [];
+
+            const allOptions = [...skillPaths, ...configMetaSkills, ...attributes];
+            allOptions.forEach((optionValue) => {
+                if (values.has(optionValue)) return;
+                values.add(optionValue);
+
+                const option = document.createElement('option');
+                option.value = optionValue;
+                option.textContent = optionValue;
+                itemSkillSelect.appendChild(option);
+            });
+        }
+
+        closeButton.addEventListener('click', () => {
+            panel.remove();
+        });
+
+        addSkillButton.addEventListener('click', () => {
+            const selectedPath = itemSkillSelect.value;
+            const note = itemSkillNoteInput.value.trim();
+            if (!selectedPath) return;
+
+            const lowestSkill = selectedPath.includes('>')
+                ? selectedPath.split('>').pop().trim()
+                : selectedPath.trim();
+
+            currentSkillPairs.push({ skill: lowestSkill, note });
+            itemSkillNoteInput.value = '';
+            itemSkillSelect.selectedIndex = 0;
+            renderSkillList();
+        });
+
+        addItemButton.addEventListener('click', () => {
+            const name = itemNameInput.value.trim();
+            if (!name) return;
+
+            const nextItem = {
+                name,
+                quantity: itemQtyInput.value.trim(),
+                description: itemDescInput.value.trim(),
+                skillNotes: currentSkillPairs.slice()
+            };
+
+            const character = window._importedCharacter;
+            if (character) {
+                if (editingItemRef) {
+                    editingItemRef.name = nextItem.name;
+                    editingItemRef.quantity = nextItem.quantity;
+                    editingItemRef.description = nextItem.description;
+                    editingItemRef.skillNotes = nextItem.skillNotes.slice();
+                } else {
+                    ensureInventoryItemsArray(character, inventoryKey).push(nextItem);
+                }
+            }
+
+            clearEditorState();
+            renderImportedInventory();
+        });
+
+        panel.querySelectorAll('.inventory-actions input').forEach((field) => {
+            if (field.type === 'checkbox') return;
+            field.addEventListener('keydown', (event) => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                addItemButton.click();
+            });
+        });
+
+        populateSkills();
+        renderImportedInventory();
     });
 }
