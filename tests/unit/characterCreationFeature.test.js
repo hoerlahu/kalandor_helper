@@ -81,4 +81,79 @@ describe('setupCharacterCreationFeature', () => {
       false
     );
   });
+
+  it('does not create a second panel when the feature tile is clicked while one is already open', () => {
+    setupCharacterCreationFeature(showMessage, (s) => String(s));
+
+    document.getElementById('characterCreationFeature').click();
+    document.getElementById('characterCreationFeature').click();
+
+    expect(document.querySelectorAll('#characterCreationPanel').length).toBe(1);
+  });
+
+  it('skips disziplin rows where the key input is left empty', () => {
+    setupCharacterCreationFeature(showMessage, (s) => String(s));
+
+    document.getElementById('characterCreationFeature').click();
+
+    const panel = document.getElementById('characterCreationPanel');
+    panel.querySelector('#disziplin-key-0').value = 'Feuerzauber';
+    panel.querySelector('#disziplin-value-0').value = '5';
+    panel.querySelector('#disziplin-key-1').value = ''; // empty – must be skipped
+    panel.querySelector('#disziplin-key-2').value = 'Überleben';
+    panel.querySelector('#disziplin-value-2').value = '3';
+
+    document.getElementById('createCharacterBtn').click();
+
+    expect(Object.keys(window._importedCharacter.Skills.Disziplinen)).toEqual(['Feuerzauber', 'Überleben']);
+  });
+
+  it('defaults Name to "New Character" when the name input is left blank', () => {
+    setupCharacterCreationFeature(showMessage, (s) => String(s));
+
+    document.getElementById('characterCreationFeature').click();
+    document.getElementById('characterCreationPanel').querySelector('[data-char-field="Name"]').value = '';
+    document.getElementById('createCharacterBtn').click();
+
+    expect(window._importedCharacter.Allgemein.Name).toBe('New Character');
+  });
+
+  it('defaults Spezies to "Mensch" when the spezies input is left blank', () => {
+    setupCharacterCreationFeature(showMessage, (s) => String(s));
+
+    document.getElementById('characterCreationFeature').click();
+    document.getElementById('characterCreationPanel').querySelector('[data-char-field="Spezies"]').value = '';
+    document.getElementById('createCharacterBtn').click();
+
+    expect(window._importedCharacter.Allgemein.Spezies).toBe('Mensch');
+  });
+
+  it('stores attribute keys using correct German names (Staerke → Stärke, Glueck → Glück, Geistesschaerfe → Geistesschärfe)', () => {
+    setupCharacterCreationFeature(showMessage, (s) => String(s));
+
+    document.getElementById('characterCreationFeature').click();
+
+    const panel = document.getElementById('characterCreationPanel');
+    panel.querySelector('[data-attr-basis="Staerke"]').value = '75';
+    panel.querySelector('[data-attr-basis="Glueck"]').value = '42';
+    panel.querySelector('[data-attr-basis="Geistesschaerfe"]').value = '30';
+
+    document.getElementById('createCharacterBtn').click();
+
+    const basiswert = window._importedCharacter.Attribute.Basiswert;
+    expect(basiswert['Stärke']).toBe(75);
+    expect(basiswert['Glück']).toBe(42);
+    expect(basiswert['Geistesschärfe']).toBe(30);
+    expect(basiswert['Staerke']).toBeUndefined();
+  });
+
+  it('defaults Basiswert to 50 when an attribute input is left blank', () => {
+    setupCharacterCreationFeature(showMessage, (s) => String(s));
+
+    document.getElementById('characterCreationFeature').click();
+    document.getElementById('characterCreationPanel').querySelector('[data-attr-basis="Staerke"]').value = '';
+    document.getElementById('createCharacterBtn').click();
+
+    expect(window._importedCharacter.Attribute.Basiswert['Stärke']).toBe(50);
+  });
 });

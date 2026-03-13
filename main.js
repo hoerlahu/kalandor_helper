@@ -67,7 +67,15 @@ function loadReadme() {
             return response.text();
         })
         .then((guideHtml) => {
-            showMessage(guideHtml, false);
+            const header = `<div style="display:flex;justify-content:flex-end;margin-bottom:8px;">` +
+                `<button id="learnMoreCloseBtn" class="btn-secondary" type="button">Close</button></div>`;
+            showMessage(header + guideHtml, false);
+            const closeBtn = importResult.querySelector('#learnMoreCloseBtn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => {
+                    importResult.innerHTML = '';
+                });
+            }
         })
         .catch((error) => {
             showMessage(escapeHtml(error.message || 'Failed to load user guide.'), true);
