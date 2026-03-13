@@ -9,3 +9,33 @@ This is a tool for the game system Kalandor.
 <li>import your character into the tool</li>
 <li>have fun</li>
 </ol>
+
+## Testing
+
+The project now includes:
+
+- Unit/integration tests with `Vitest` + `jsdom`
+- Schema contract tests with `Ajv`
+- End-to-end smoke test with `Playwright`
+
+### Prerequisites
+
+- Node.js 20+ (includes `npm`)
+
+### Install dependencies
+
+```bash
+npm install
+```
+
+### Run unit/integration/schema tests
+
+```bash
+npm run test
+```
+
+### Run e2e tests
+
+```bash
+npm run test:e2e
+```
