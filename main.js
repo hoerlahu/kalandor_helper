@@ -20,7 +20,7 @@ if (debugToggle) {
 const importResult = document.getElementById('importResult');
 const learnMoreButton = document.getElementById('learnMoreBtn');
 
-function showMessage(html, isError) {
+export function showMessage(html, isError) {
     if (!importResult) return;
 
     const styles = isError
@@ -30,7 +30,7 @@ function showMessage(html, isError) {
     importResult.innerHTML = `<div style="padding:12px;border-radius:6px;${styles}">${html}</div>`;
 }
 
-function escapeHtml(value) {
+export function escapeHtml(value) {
     const entityMap = {
         '&': '&amp;',
         '<': '&lt;',
