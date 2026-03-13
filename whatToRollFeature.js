@@ -91,7 +91,10 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
         // Create HTML for dropdowns
         let html = '<div style="padding:12px;border-radius:6px;background:#f1f8ff;border:1px solid #cfe6ff;">';
-        html += '<h3>What do I roll?</h3>';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">';
+        html += '<h3 style="margin:0;">What do I roll?</h3>';
+        html += '<button id="rollSelectorClose" type="button" class="btn-secondary">Close</button>';
+        html += '</div>';
 
         // Child dropdown (hidden initially)
         html += '<label style="display:block;margin-bottom:10px;" id="childLabel"><strong>Property:</strong></label>';
@@ -125,6 +128,13 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
         const greatgrandchildLabel = document.getElementById('greatgrandchildLabel');
         const rollResult = document.getElementById('rollResult');
+        const rollSelectorClose = document.getElementById('rollSelectorClose');
+
+        rollSelectorClose.addEventListener('click', () => {
+            rollSelector.innerHTML = '';
+            rollSelector.style.display = 'none';
+            importResult.style.display = '';
+        });
 
         const selectedParent = supportedRoll;
         rollResult.innerHTML = '';

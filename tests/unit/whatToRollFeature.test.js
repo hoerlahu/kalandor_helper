@@ -109,6 +109,57 @@ describe('setupWhatToRollFeature', () => {
     expect(optionValues).toContain('Absorbtion');
   });
 
+  it('renders a close button in the roll selector panel', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70 },
+        Punkte: { Beweglichkeit: 3 }
+      },
+      inventory: {
+        items: []
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+
+    expect(document.getElementById('rollSelectorClose')).not.toBeNull();
+  });
+
+  it('hides the roll selector panel when close is clicked', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70 },
+        Punkte: { Beweglichkeit: 3 }
+      },
+      inventory: {
+        items: []
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+
+    expect(document.getElementById('rollSelector').style.display).toBe('block');
+    document.getElementById('rollSelectorClose').click();
+    expect(document.getElementById('rollSelector').style.display).toBe('none');
+    expect(document.getElementById('rollSelector').innerHTML).toBe('');
+  });
+
   it('renders matching item notes in roll details output', () => {
     window._importedCharacter = {
       Skills: {
