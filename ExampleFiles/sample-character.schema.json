@@ -83,7 +83,7 @@
             "type": "object",
             "properties": {
               "name": { "type": "string" },
-              "quantity": { "type": "integer" },
+              "quantity": { "type": "string" },
               "description": { "type": "string" },
               "skillNotes": {
                 "type": "array",

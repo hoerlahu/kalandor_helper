@@ -1,6 +1,7 @@
 import { setupWhatToRollFeature } from './whatToRollFeature.js';
 import { setupImportExportFeature } from './importExportFeature.js';
 import { setupInventoryFeature } from './inventoryFeature.js';
+import { setupCharacterCreationFeature } from './characterCreationFeature.js';
 
 const DEBUG_FLAG_KEY = 'kalandor_debugMode';
 window._config = {};
@@ -68,3 +69,4 @@ loadConfig().then(() => {
 setupWhatToRollFeature(showMessage, escapeHtml);
 setupImportExportFeature(showMessage, escapeHtml);
 setupInventoryFeature(showMessage, escapeHtml);
+setupCharacterCreationFeature(showMessage, escapeHtml);
