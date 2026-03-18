@@ -1,7 +1,5 @@
 BUGS:
 
-Items auf Kindebene kaputt -> wird nicht angezeigt
-
 Feature Requests:
 Items sollen noch numerisches Feld haben, wie es den Roll beeinflusst, mit Checkbox im WhatDoIRoll -> reaktiv
 Bei WhatDoIRoll direkt den roll20 Würfelwurf zum copy pasten
