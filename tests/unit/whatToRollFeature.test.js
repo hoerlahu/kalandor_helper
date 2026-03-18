@@ -201,4 +201,145 @@ describe('setupWhatToRollFeature', () => {
     expect(document.getElementById('rollResult').innerHTML).toContain('Grip Gloves');
     expect(document.getElementById('rollResult').innerHTML).toContain('Add traction bonus');
   });
+
+  it('renders a checkbox for each inventory item in the what-to-roll panel', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70 },
+        Punkte: { Beweglichkeit: 3 }
+      },
+      inventory: {
+        items: [
+          { name: 'Grip Gloves', skillNotes: [] },
+          { name: 'Lucky Charm', skillNotes: [] }
+        ]
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+
+    const childSelect = document.getElementById('childSelect');
+    childSelect.value = 'Ausbildung';
+    childSelect.dispatchEvent(new Event('change'));
+
+    const grandchildSelect = document.getElementById('grandchildSelect');
+    grandchildSelect.value = 'Korperlich';
+    grandchildSelect.dispatchEvent(new Event('change'));
+
+    const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
+    greatgrandchildSelect.value = 'Athletik';
+    greatgrandchildSelect.dispatchEvent(new Event('change'));
+
+    const checkboxes = document.querySelectorAll('#rollResult .roll-item-toggle');
+    expect(checkboxes.length).toBe(2);
+  });
+
+  it('uses what-to-roll checkbox state to include or ignore numerical item bonus', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70 },
+        Punkte: { Beweglichkeit: 3 }
+      },
+      inventory: {
+        items: [
+          {
+            name: 'Grip Gloves',
+            skillNotes: [{ skill: 'Athletik', note: 'Add traction bonus', numericalBonus: 10 }]
+          }
+        ]
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+
+    const childSelect = document.getElementById('childSelect');
+    childSelect.value = 'Ausbildung';
+    childSelect.dispatchEvent(new Event('change'));
+
+    const grandchildSelect = document.getElementById('grandchildSelect');
+    grandchildSelect.value = 'Korperlich';
+    grandchildSelect.dispatchEvent(new Event('change'));
+
+    const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
+    greatgrandchildSelect.value = 'Athletik';
+    greatgrandchildSelect.dispatchEvent(new Event('change'));
+
+    let resultHtml = document.getElementById('rollResult').innerHTML;
+    expect(resultHtml).toContain('Item-Boni: +10');
+
+    const itemToggle = document.querySelector('#rollResult .roll-item-toggle');
+    itemToggle.checked = false;
+    itemToggle.dispatchEvent(new Event('change'));
+
+    resultHtml = document.getElementById('rollResult').innerHTML;
+    expect(resultHtml).toContain('Item-Boni: +0');
+    expect(resultHtml).toContain('ignored');
+    expect(window._importedCharacter.inventory.items[0].applyNumericalModifier).toBeUndefined();
+  });
+
+  it('keeps opened roll detail expanded when item checkbox is toggled', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70 },
+        Punkte: { Beweglichkeit: 3 }
+      },
+      inventory: {
+        items: [
+          {
+            name: 'Grip Gloves',
+            skillNotes: [{ skill: 'Athletik', note: 'Add traction bonus', numericalBonus: 10 }]
+          }
+        ]
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+
+    const childSelect = document.getElementById('childSelect');
+    childSelect.value = 'Ausbildung';
+    childSelect.dispatchEvent(new Event('change'));
+
+    const grandchildSelect = document.getElementById('grandchildSelect');
+    grandchildSelect.value = 'Korperlich';
+    grandchildSelect.dispatchEvent(new Event('change'));
+
+    const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
+    greatgrandchildSelect.value = 'Athletik';
+    greatgrandchildSelect.dispatchEvent(new Event('change'));
+
+    const detailBefore = document.querySelector('#rollResult details[data-roll-base="Beweglichkeit"]');
+    detailBefore.open = true;
+
+    const itemToggle = document.querySelector('#rollResult .roll-item-toggle');
+    itemToggle.checked = false;
+    itemToggle.dispatchEvent(new Event('change'));
+
+    const detailAfter = document.querySelector('#rollResult details[data-roll-base="Beweglichkeit"]');
+    expect(detailAfter).not.toBeNull();
+    expect(detailAfter.open).toBe(true);
+  });
 });

@@ -1,6 +1,6 @@
 export function setupWhatToRollFeature(showMessage, escapeHtml) {
     // roll computation helper previously in main.js
-    function displayRollInfo(level1, level2, level3, level4) {
+    function displayRollInfo(level1, level2, level3, level4, enabledItemIndexes) {
         let roll = level1;
         if (!level1) return "No roll selected";
         if (level2) roll = level2;
@@ -35,19 +35,31 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
                 let notesHtml = '';
                 let itemBonusTotal = 0;
+                let modifierToggleHtml = '';
                 if (selectedSkill && window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
                 const items = window._importedCharacter.inventory.items;
                 let foundNotes = [];
-                items.forEach(item => {
+
+                modifierToggleHtml = '<div class="muted" style="margin-top:8px;">Apply item modifiers:</div>' +
+                    items.map((item, itemIndex) => {
+                        const applyNumericalBonus = !enabledItemIndexes || enabledItemIndexes.has(itemIndex);
+                        return '<label class="muted" style="display:block;margin-top:4px;cursor:pointer;">' +
+                            '<input class="roll-item-toggle" data-item-index="' + itemIndex + '" type="checkbox" ' + (applyNumericalBonus ? 'checked' : '') + ' style="margin-right:6px;" />' +
+                            escapeHtml(item.name || ('Item ' + (itemIndex + 1))) +
+                            '</label>';
+                    }).join('');
+
+                items.forEach((item, itemIndex) => {
+                    const applyNumericalBonus = !enabledItemIndexes || enabledItemIndexes.has(itemIndex);
                     if (Array.isArray(item.skillNotes)) {
                         item.skillNotes.forEach(noteObj => {
                             if (noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3) {
-                                if (typeof noteObj.numericalBonus === 'number') {
+                                if (applyNumericalBonus && typeof noteObj.numericalBonus === 'number') {
                                     itemBonusTotal += noteObj.numericalBonus;
                                 }
                                 if (noteObj.note) {
                                     const bonusPart = typeof noteObj.numericalBonus === 'number'
-                                        ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + ')</strong>'
+                                        ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + (applyNumericalBonus ? '' : ', ignored') + ')</strong>'
                                         : '';
                                     foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + bonusPart + '</div>');
                                 }
@@ -64,7 +76,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             
 
                 output += "<br>" +
-                    "<details style='margin-top:8px;'>" +
+                    "<details data-roll-base='" + escapeHtml(base) + "' style='margin-top:8px;'>" +
                     "<summary style='cursor:pointer;color:#0366d6;'>" + base + "</summary>" +
                     "<div style='margin-left:16px;margin-top:8px;'>" +
                     "Basiswert: " + basiswert + "<br>" +
@@ -76,6 +88,8 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     "<br>" +
                     "Grundwert: " + overallValue + "<br>" +
                     "<br>" +
+                        modifierToggleHtml +
+                        "<br>" +
                     "Items: " + (notesHtml ? notesHtml : "None") + "<br>"+
                     "</div>" +
                     "</details>";
@@ -138,12 +152,81 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const greatgrandchildLabel = document.getElementById('greatgrandchildLabel');
         const rollResult = document.getElementById('rollResult');
         const rollSelectorClose = document.getElementById('rollSelectorClose');
+        const enabledItemIndexes = new Set(
+            (charData && charData.inventory && Array.isArray(charData.inventory.items)
+                ? charData.inventory.items.map((_, index) => index)
+                : [])
+        );
+
+        function updateRollResult() {
+            const selectedChild = childSelect.value;
+            const selectedGrandchild = grandchildSelect.value;
+            const selectedGreatgrandchild = greatgrandchildSelect.value;
+
+            const openDetails = new Set(
+                Array.from(rollResult.querySelectorAll('details[open][data-roll-base]'))
+                    .map((detail) => detail.getAttribute('data-roll-base'))
+                    .filter(Boolean)
+            );
+
+            function renderRollHtml(html) {
+                rollResult.innerHTML = html;
+                if (!openDetails.size) return;
+                rollResult.querySelectorAll('details[data-roll-base]').forEach((detail) => {
+                    if (openDetails.has(detail.getAttribute('data-roll-base'))) {
+                        detail.open = true;
+                    }
+                });
+            }
+
+            if (!selectedChild) {
+                renderRollHtml('');
+                return;
+            }
+
+            if (selectedGreatgrandchild) {
+                renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, selectedGreatgrandchild, enabledItemIndexes) + '</strong>');
+                return;
+            }
+
+            if (selectedGrandchild) {
+                const grandchildValue = charData[selectedParent][selectedChild][selectedGrandchild];
+                if (typeof grandchildValue !== 'object' || grandchildValue === null || Array.isArray(grandchildValue)) {
+                    renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, undefined, enabledItemIndexes) + '</strong>');
+                    return;
+                }
+            }
+
+            const childValue = charData[selectedParent][selectedChild];
+            if (typeof childValue !== 'object' || childValue === null || Array.isArray(childValue)) {
+                renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, undefined, undefined, enabledItemIndexes) + '</strong>');
+                return;
+            }
+
+            renderRollHtml('');
+        }
 
         rollSelectorClose.addEventListener('click', () => {
             rollSelector.innerHTML = '';
             rollSelector.style.display = 'none';
             importResult.style.display = '';
         });
+
+        rollResult.addEventListener('change', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement)) return;
+            if (!target.classList.contains('roll-item-toggle')) return;
+
+            const itemIndex = Number(target.getAttribute('data-item-index'));
+            if (!Number.isInteger(itemIndex)) return;
+
+            if (target.checked) {
+                enabledItemIndexes.add(itemIndex);
+            } else {
+                enabledItemIndexes.delete(itemIndex);
+            }
+            updateRollResult();
+        }, true);
 
         const selectedParent = supportedRoll;
         rollResult.innerHTML = '';
@@ -229,7 +312,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 grandchildLabel.style.display = 'block';
             } else {
                 // Leaf value reached
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild) + '</strong>';
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild, undefined, undefined, enabledItemIndexes) + '</strong>';
                 grandchildSelect.style.display = 'none';
                 grandchildLabel.style.display = 'none';
             }
@@ -261,7 +344,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 greatgrandchildLabel.style.display = 'block';
             } else {
                 // Leaf value reached
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild) + '</strong>';
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild, undefined, enabledItemIndexes) + '</strong>';
                 greatgrandchildSelect.style.display = 'none';
                 greatgrandchildLabel.style.display = 'none';
             }
@@ -277,7 +360,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 return;
             }
 
-            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild,selectedGreatgrandchild) + '</strong>';
+            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild,selectedGreatgrandchild, enabledItemIndexes) + '</strong>';
         });
     });
 }
