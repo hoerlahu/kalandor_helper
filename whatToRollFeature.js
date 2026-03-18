@@ -32,18 +32,25 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
                 const basisWertPunkte = window._importedCharacter["Attribute"]["Punkte"][base] || 0;
                 const basisWertPunkteMultiplikator = config[roll]['BasisWertPunkteMultiplikator'] || 0;
-                
-                const overallValue = (basiswert * basiswertMultiplier) + skillValue + (zehnerStelle * zehnerStelleMultiplikator) + (basisWertPunkte * basisWertPunkteMultiplikator);
 
                 let notesHtml = '';
+                let itemBonusTotal = 0;
                 if (selectedSkill && window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
                 const items = window._importedCharacter.inventory.items;
                 let foundNotes = [];
                 items.forEach(item => {
                     if (Array.isArray(item.skillNotes)) {
                         item.skillNotes.forEach(noteObj => {
-                            if ((noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3) && noteObj.note) {
-                                foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + '</div>');
+                            if (noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3) {
+                                if (typeof noteObj.numericalBonus === 'number') {
+                                    itemBonusTotal += noteObj.numericalBonus;
+                                }
+                                if (noteObj.note) {
+                                    const bonusPart = typeof noteObj.numericalBonus === 'number'
+                                        ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + ')</strong>'
+                                        : '';
+                                    foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + bonusPart + '</div>');
+                                }
                             }
                         });
                     }
@@ -52,6 +59,8 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
                 }
             }
+
+                const overallValue = (basiswert * basiswertMultiplier) + skillValue + (zehnerStelle * zehnerStelleMultiplikator) + (basisWertPunkte * basisWertPunkteMultiplikator) + itemBonusTotal;
             
 
                 output += "<br>" +
@@ -63,6 +72,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     "10s Place Attributes: " + (config[roll]['10erStelle'] ? (zehnerStelle * zehnerStelleMultiplikator) : "No") + "<br>" +
                     "BasiswertPunkte: " + (basisWertPunkte * basisWertPunkteMultiplikator) + "<br>" +
                     "Skillpunkte: " + (skillValue) + "<br>" +
+                    "Item-Boni: " + (itemBonusTotal >= 0 ? '+' : '') + itemBonusTotal + "<br>" +
                     "<br>" +
                     "Grundwert: " + overallValue + "<br>" +
                     "<br>" +
