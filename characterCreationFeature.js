@@ -35,10 +35,10 @@ const AUSBILDUNG_SKILLS = {
 		'Reiten',
 		'Schiffe (See/Luft)',
 		'Schlösser knacken',
-		'Werkstoffbearbeitung',
-		'Ausweichen'
+		'Werkstoffbearbeitung'
 	],
 	Kampf: [
+		'Ausweichen',
 		'Äxte',
 		'Blitzschnelle Reflexe',
 		'Bogenschießen',

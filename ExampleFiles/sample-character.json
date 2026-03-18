@@ -48,10 +48,10 @@
         "Reiten": 2,
         "Schiffe (See/Luft)": 0,
         "Schlösser knacken": 0,
-        "Werkstoffbearbeitung": 3,
-        "Ausweichen": 2
+        "Werkstoffbearbeitung": 3
       },
       "Kampf": {
+        "Ausweichen": 2,
         "Äxte": 3,
         "Blitzschnelle Reflexe": 2,
         "Bogenschießen": 1,
