@@ -42,7 +42,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 items.forEach(item => {
                     if (Array.isArray(item.skillNotes)) {
                         item.skillNotes.forEach(noteObj => {
-                            if ((noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2) && noteObj.note) {
+                            if ((noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3) && noteObj.note) {
                                 foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + '</div>');
                             }
                         });

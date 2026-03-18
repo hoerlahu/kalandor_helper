@@ -1,6 +1,5 @@
 BUGS:
 
-Ausweichen nicht unter Kampf
 Items auf Kindebene kaputt -> wird nicht angezeigt
 
 Feature Requests:
