@@ -51,7 +51,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                                 }
                                 if (noteObj.note) {
                                     const bonusPart = typeof noteObj.numericalBonus === 'number'
-                                        ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + (applyNumericalBonus ? '' : ', ignored') + ')</strong>'
+                                        ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + ')</strong>'
                                         : '';
                                     matchedNotes.push(escapeHtml(noteObj.note) + bonusPart);
                                 }
@@ -60,13 +60,14 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     }
 
                     if (matchedNotes.length) {
+                        const itemColor = applyNumericalBonus ? '' : 'color:#aaa;';
                         foundNotes.push(
-                            '<div class="muted" style="margin-top:4px;">' +
-                            '<label style="cursor:pointer;">' +
+                            '<div class="muted" style="margin-top:4px;' + itemColor + '">' +
+                            '<label style="cursor:pointer;' + itemColor + '">' +
                             '<input class="roll-item-toggle" data-item-index="' + itemIndex + '" type="checkbox" ' + (applyNumericalBonus ? 'checked' : '') + ' style="margin-right:6px;" />' +
                             '<strong>' + escapeHtml(item.name || ('Item ' + (itemIndex + 1))) + '</strong>' +
                             '</label>' +
-                            '<div style="margin-left:16px;">' + matchedNotes.join('<br>') + '</div>' +
+                            '<div style="margin-left:16px;' + itemColor + '">' + matchedNotes.join('<br>') + '</div>' +
                             '</div>'
                         );
                     }
@@ -91,6 +92,9 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     "Item-Boni: " + (itemBonusTotal >= 0 ? '+' : '') + itemBonusTotal + "<br>" +
                     "<br>" +
                     "Grundwert: " + overallValue + "<br>" +
+                    "<br>" +
+                    "Roll20: <code>/r 1d100-" + overallValue + "</code>" +
+                    " <button type='button' class='btn-secondary' style='padding:2px 8px;font-size:0.85em;' onclick=\"navigator.clipboard.writeText('/r 1d100-" + overallValue + "')\">Copy</button><br>" +
                     "<br>" +
                     "Items: " + (notesHtml ? notesHtml : "None") + "<br>"+
                     "</div>" +

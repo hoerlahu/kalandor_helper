@@ -289,7 +289,7 @@ describe('setupWhatToRollFeature', () => {
 
     resultHtml = document.getElementById('rollResult').innerHTML;
     expect(resultHtml).toContain('Item-Boni: +0');
-    expect(resultHtml).toContain('ignored');
+    expect(resultHtml).toContain('color:#aaa;');
     expect(window._importedCharacter.inventory.items[0].applyNumericalModifier).toBeUndefined();
   });
 
