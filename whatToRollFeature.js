@@ -35,22 +35,14 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
                 let notesHtml = '';
                 let itemBonusTotal = 0;
-                let modifierToggleHtml = '';
                 if (selectedSkill && window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
                 const items = window._importedCharacter.inventory.items;
                 let foundNotes = [];
 
-                modifierToggleHtml = '<div class="muted" style="margin-top:8px;">Apply item modifiers:</div>' +
-                    items.map((item, itemIndex) => {
-                        const applyNumericalBonus = !enabledItemIndexes || enabledItemIndexes.has(itemIndex);
-                        return '<label class="muted" style="display:block;margin-top:4px;cursor:pointer;">' +
-                            '<input class="roll-item-toggle" data-item-index="' + itemIndex + '" type="checkbox" ' + (applyNumericalBonus ? 'checked' : '') + ' style="margin-right:6px;" />' +
-                            escapeHtml(item.name || ('Item ' + (itemIndex + 1))) +
-                            '</label>';
-                    }).join('');
-
                 items.forEach((item, itemIndex) => {
                     const applyNumericalBonus = !enabledItemIndexes || enabledItemIndexes.has(itemIndex);
+                    const matchedNotes = [];
+
                     if (Array.isArray(item.skillNotes)) {
                         item.skillNotes.forEach(noteObj => {
                             if (noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3) {
@@ -61,10 +53,22 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                                     const bonusPart = typeof noteObj.numericalBonus === 'number'
                                         ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + (applyNumericalBonus ? '' : ', ignored') + ')</strong>'
                                         : '';
-                                    foundNotes.push('<div class="muted">Item: <strong>' + escapeHtml(item.name) + '</strong> — ' + escapeHtml(noteObj.note) + bonusPart + '</div>');
+                                    matchedNotes.push(escapeHtml(noteObj.note) + bonusPart);
                                 }
                             }
                         });
+                    }
+
+                    if (matchedNotes.length) {
+                        foundNotes.push(
+                            '<div class="muted" style="margin-top:4px;">' +
+                            '<label style="cursor:pointer;">' +
+                            '<input class="roll-item-toggle" data-item-index="' + itemIndex + '" type="checkbox" ' + (applyNumericalBonus ? 'checked' : '') + ' style="margin-right:6px;" />' +
+                            '<strong>' + escapeHtml(item.name || ('Item ' + (itemIndex + 1))) + '</strong>' +
+                            '</label>' +
+                            ' — ' + matchedNotes.join('; ') +
+                            '</div>'
+                        );
                     }
                 });
                 if (foundNotes.length) {
@@ -88,8 +92,6 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     "<br>" +
                     "Grundwert: " + overallValue + "<br>" +
                     "<br>" +
-                        modifierToggleHtml +
-                        "<br>" +
                     "Items: " + (notesHtml ? notesHtml : "None") + "<br>"+
                     "</div>" +
                     "</details>";

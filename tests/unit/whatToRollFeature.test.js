@@ -217,8 +217,8 @@ describe('setupWhatToRollFeature', () => {
       },
       inventory: {
         items: [
-          { name: 'Grip Gloves', skillNotes: [] },
-          { name: 'Lucky Charm', skillNotes: [] }
+          { name: 'Grip Gloves', skillNotes: [{ skill: 'Athletik', note: 'Grip +', numericalBonus: 1 }] },
+          { name: 'Lucky Charm', skillNotes: [{ skill: 'Athletik', note: 'Luck +', numericalBonus: 2 }] }
         ]
       }
     };
