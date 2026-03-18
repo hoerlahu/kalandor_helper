@@ -66,7 +66,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                             '<input class="roll-item-toggle" data-item-index="' + itemIndex + '" type="checkbox" ' + (applyNumericalBonus ? 'checked' : '') + ' style="margin-right:6px;" />' +
                             '<strong>' + escapeHtml(item.name || ('Item ' + (itemIndex + 1))) + '</strong>' +
                             '</label>' +
-                            ' — ' + matchedNotes.join('; ') +
+                            '<div style="margin-left:16px;">' + matchedNotes.join('<br>') + '</div>' +
                             '</div>'
                         );
                     }
