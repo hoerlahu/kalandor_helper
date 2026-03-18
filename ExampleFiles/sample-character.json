@@ -116,11 +116,13 @@
           "skillNotes": [
             {
               "skill": "Beweglichkeit",
-              "note": "+10 auf alle Beweglichkeitswürfe, wenn der Charakter auf einem Bein steht"
+              "note": "+10 auf alle Beweglichkeitswürfe, wenn der Charakter auf einem Bein steht",
+              "numericalBonus": 10
             },
             {
               "skill": "Athletik",
-              "note": "+5 auf alle Athletik-Würfe"
+              "note": "+5 auf alle Athletik-Würfe",
+              "numericalBonus": 5
             }
           ]
 	    },
@@ -132,7 +134,8 @@
           "skillNotes": [
             {
               "skill": "Absorbtion",
-              "note": "+10 auf alle Absorbtion-Würfe, wenn der Charakter auf einem Bein steht"
+              "note": "+10 auf alle Absorbtion-Würfe, wenn der Charakter auf einem Bein steht",
+              "numericalBonus": 10
             }
           ]
 	    },
@@ -144,7 +147,8 @@
           "skillNotes": [
             {
               "skill": "Absorbtion",
-              "note": "+10 auf alle Absorbtion-Würfe, wenn der Charakter auf einem Bein steht"
+              "note": "+10 auf alle Absorbtion-Würfe, wenn der Charakter auf einem Bein steht",
+              "numericalBonus": 10
             }
           ]
 	    }

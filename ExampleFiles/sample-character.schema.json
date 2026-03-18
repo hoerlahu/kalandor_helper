@@ -87,7 +87,7 @@
               "description": { "type": "string" },
               "skillNotes": {
                 "type": "array",
-                "additionalProperties": { "type": "string" }
+                "additionalProperties": { "type": "object" }
               }
             },
             "required": ["name", "quantity", "description", "skillNotes"]

@@ -60,7 +60,7 @@ function collectNestedKeys(obj, options, prefix = '', depth = 1) {
 function buildItemHtml(item, escapeHtml) {
     const skillNotesHtml = item.skillNotes && item.skillNotes.length
         ? `<div class="muted">${item.skillNotes
-            .map((s) => `<div class="skill-chip">${escapeHtml(s.skill)}${s.note ? ` - ${escapeHtml(s.note)}` : ''}</div>`)
+            .map((s) => `<div class="skill-chip">${escapeHtml(s.skill)}${s.note ? ` - ${escapeHtml(s.note)}` : ''}${s.numericalBonus !== undefined ? ` <em>(${s.numericalBonus >= 0 ? '+' : ''}${escapeHtml(String(s.numericalBonus))})</em>` : ''}</div>`)
             .join('')}</div>`
         : '';
 
@@ -104,6 +104,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 <div class="ia-row ia-skill-entry">
                     <select id="itemSkillSelect" style="min-width:200px;"></select>
                     <input id="itemSkillNoteText" placeholder="Skill note" />
+                    <input id="itemSkillBonus" placeholder="Modifier" type="number" style="width:90px;" />
                     <button id="addSkillBtn" class="btn-secondary" type="button">Add Skill</button>
                 </div>
                 <div id="itemSkillList" class="skill-list"></div>
@@ -124,6 +125,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
         const itemDescInput = panel.querySelector('#itemDesc');
         const itemSkillSelect = panel.querySelector('#itemSkillSelect');
         const itemSkillNoteInput = panel.querySelector('#itemSkillNoteText');
+        const itemSkillBonusInput = panel.querySelector('#itemSkillBonus');
         const addSkillButton = panel.querySelector('#addSkillBtn');
         const addItemButton = panel.querySelector('#addItemBtn');
         const skillListContainer = panel.querySelector('#itemSkillList');
@@ -140,7 +142,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
 
             currentSkillPairs.forEach((pair, index) => {
                 const item = document.createElement('li');
-                item.innerHTML = `<strong>${escapeHtml(pair.skill)}</strong>${pair.note ? ` - ${escapeHtml(pair.note)}` : ''}`;
+                item.innerHTML = `<strong>${escapeHtml(pair.skill)}</strong>${pair.note ? ` - ${escapeHtml(pair.note)}` : ''}${pair.numericalBonus !== undefined && pair.numericalBonus !== '' ? ` <em>(${pair.numericalBonus >= 0 ? '+' : ''}${escapeHtml(String(pair.numericalBonus))})</em>` : ''}`;
 
                 const removeButton = document.createElement('button');
                 removeButton.textContent = 'Remove';
@@ -165,6 +167,7 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
             itemQtyInput.value = '';
             itemDescInput.value = '';
             itemSkillNoteInput.value = '';
+            itemSkillBonusInput.value = '';
             itemSkillSelect.selectedIndex = 0;
             currentSkillPairs = [];
             renderSkillList();
@@ -302,14 +305,18 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
         addSkillButton.addEventListener('click', () => {
             const selectedPath = itemSkillSelect.value;
             const note = itemSkillNoteInput.value.trim();
+            const bonusRaw = itemSkillBonusInput.value.trim();
             if (!selectedPath) return;
 
             const lowestSkill = selectedPath.includes('>')
                 ? selectedPath.split('>').pop().trim()
                 : selectedPath.trim();
 
-            currentSkillPairs.push({ skill: lowestSkill, note });
+            const entry = { skill: lowestSkill, note };
+            if (bonusRaw !== '') entry.numericalBonus = Number(bonusRaw);
+            currentSkillPairs.push(entry);
             itemSkillNoteInput.value = '';
+            itemSkillBonusInput.value = '';
             itemSkillSelect.selectedIndex = 0;
             renderSkillList();
         });
