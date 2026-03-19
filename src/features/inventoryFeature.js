@@ -131,7 +131,24 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
         const skillListContainer = panel.querySelector('#itemSkillList');
 
         let currentSkillPairs = [];
+        let editingSkillIndex = null;
         let editingItemRef = null;
+
+        function resolveSkillSelectValueFromNote(skillValue) {
+            if (!skillValue) return '';
+
+            const directOption = Array.from(itemSkillSelect.options).find((option) => option.value === skillValue);
+            if (directOption) return directOption.value;
+
+            const byLeafOption = Array.from(itemSkillSelect.options).find((option) => {
+                const optionValue = option.value;
+                if (!optionValue) return false;
+                const leaf = optionValue.includes('>') ? optionValue.split('>').pop().trim() : optionValue.trim();
+                return leaf === skillValue;
+            });
+
+            return byLeafOption ? byLeafOption.value : '';
+        }
 
         function renderSkillList() {
             skillListContainer.innerHTML = '';
@@ -144,15 +161,37 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
                 const item = document.createElement('li');
                 item.innerHTML = `<strong>${escapeHtml(pair.skill)}</strong>${pair.note ? ` - ${escapeHtml(pair.note)}` : ''}${pair.numericalBonus !== undefined && pair.numericalBonus !== '' ? ` <em>(${pair.numericalBonus >= 0 ? '+' : ''}${escapeHtml(String(pair.numericalBonus))})</em>` : ''}`;
 
+                const editButton = document.createElement('button');
+                editButton.textContent = 'Edit';
+                editButton.className = 'btn-secondary';
+                editButton.style.marginLeft = '8px';
+                editButton.addEventListener('click', () => {
+                    editingSkillIndex = index;
+                    itemSkillSelect.value = resolveSkillSelectValueFromNote(pair.skill);
+                    itemSkillNoteInput.value = pair.note || '';
+                    itemSkillBonusInput.value = pair.numericalBonus === undefined ? '' : String(pair.numericalBonus);
+                    addSkillButton.textContent = 'Update Skill';
+                });
+
                 const removeButton = document.createElement('button');
                 removeButton.textContent = 'Remove';
                 removeButton.className = 'btn-secondary';
                 removeButton.style.marginLeft = '8px';
                 removeButton.addEventListener('click', () => {
                     currentSkillPairs.splice(index, 1);
+                    if (editingSkillIndex === index) {
+                        editingSkillIndex = null;
+                        itemSkillNoteInput.value = '';
+                        itemSkillBonusInput.value = '';
+                        itemSkillSelect.selectedIndex = 0;
+                        addSkillButton.textContent = 'Add Skill';
+                    } else if (editingSkillIndex !== null && editingSkillIndex > index) {
+                        editingSkillIndex -= 1;
+                    }
                     renderSkillList();
                 });
 
+                item.appendChild(editButton);
                 item.appendChild(removeButton);
                 list.appendChild(item);
             });
@@ -170,6 +209,8 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
             itemSkillBonusInput.value = '';
             itemSkillSelect.selectedIndex = 0;
             currentSkillPairs = [];
+            editingSkillIndex = null;
+            addSkillButton.textContent = 'Add Skill';
             renderSkillList();
         }
 
@@ -180,6 +221,8 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
             itemQtyInput.value = item.quantity || '';
             itemDescInput.value = item.description || '';
             currentSkillPairs = Array.isArray(item.skillNotes) ? item.skillNotes.slice() : [];
+            editingSkillIndex = null;
+            addSkillButton.textContent = 'Add Skill';
             renderSkillList();
         }
 
@@ -314,10 +357,16 @@ export function setupInventoryFeature(showMessage, escapeHtml) {
 
             const entry = { skill: lowestSkill, note };
             if (bonusRaw !== '') entry.numericalBonus = Number(bonusRaw);
-            currentSkillPairs.push(entry);
+            if (editingSkillIndex !== null && editingSkillIndex >= 0 && editingSkillIndex < currentSkillPairs.length) {
+                currentSkillPairs[editingSkillIndex] = entry;
+            } else {
+                currentSkillPairs.push(entry);
+            }
             itemSkillNoteInput.value = '';
             itemSkillBonusInput.value = '';
             itemSkillSelect.selectedIndex = 0;
+            editingSkillIndex = null;
+            addSkillButton.textContent = 'Add Skill';
             renderSkillList();
         });
 

@@ -184,4 +184,93 @@ describe('setupInventoryFeature', () => {
     const items = window._importedCharacter.inventory?.items || [];
     expect(items).toHaveLength(0);
   });
+
+  it('allows editing an existing skill note while editing an item', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: {
+          Beweglichkeit: 70
+        }
+      },
+      inventory: {
+        items: [
+          {
+            name: 'Boots',
+            quantity: '1',
+            description: 'Old boots',
+            skillNotes: [
+              { skill: 'Athletik', note: 'Old note', numericalBonus: 1 }
+            ]
+          }
+        ]
+      }
+    };
+
+    setupInventoryFeature(vi.fn(), (s) => String(s));
+    document.getElementById('inventoryFeature').click();
+
+    const editItemButton = document.querySelector('#inventoryContent .btn-secondary');
+    editItemButton.click();
+
+    const editSkillButton = document.querySelector('#itemSkillList .btn-secondary');
+    editSkillButton.click();
+
+    document.getElementById('itemSkillSelect').value = 'Ausbildung > Korperlich > Athletik';
+    document.getElementById('itemSkillNoteText').value = 'Updated note';
+    document.getElementById('itemSkillBonus').value = '4';
+    document.getElementById('addSkillBtn').click();
+    document.getElementById('addItemBtn').click();
+
+    expect(window._importedCharacter.inventory.items).toHaveLength(1);
+    expect(window._importedCharacter.inventory.items[0].skillNotes).toEqual([
+      { skill: 'Athletik', note: 'Updated note', numericalBonus: 4 }
+    ]);
+  });
+
+  it('preselects the skill dropdown to the skill note value when editing a skill note', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: {
+          Beweglichkeit: 70
+        }
+      },
+      inventory: {
+        items: [
+          {
+            name: 'Boots',
+            quantity: '1',
+            description: 'Old boots',
+            skillNotes: [
+              { skill: 'Athletik', note: 'Old note', numericalBonus: 1 }
+            ]
+          }
+        ]
+      }
+    };
+
+    setupInventoryFeature(vi.fn(), (s) => String(s));
+    document.getElementById('inventoryFeature').click();
+
+    const editItemButton = document.querySelector('#inventoryContent .btn-secondary');
+    editItemButton.click();
+
+    const editSkillButton = document.querySelector('#itemSkillList .btn-secondary');
+    editSkillButton.click();
+
+    expect(document.getElementById('itemSkillSelect').value).toBe('Ausbildung > Korperlich > Athletik');
+  });
 });
