@@ -21,7 +21,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         return 0;
     }
 
-    function collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledItemIndexes) {
+    function collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledSkillNotes) {
         let notesHtml = '';
         let itemBonusTotal = 0;
 
@@ -33,15 +33,17 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const foundNotes = [];
 
         items.forEach((item, itemIndex) => {
-            const applyNumericalBonus = !enabledItemIndexes || enabledItemIndexes.has(itemIndex);
-            const matchedNotes = [];
+            const itemNoteElements = [];
 
             if (Array.isArray(item.skillNotes)) {
-                item.skillNotes.forEach((noteObj) => {
+                item.skillNotes.forEach((noteObj, noteIndex) => {
+                    const noteKey = itemIndex + '-' + noteIndex;
+                    const isNoteEnabled = enabledSkillNotes && enabledSkillNotes.has(noteKey);
+                    
                     const matchesSkill = noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3;
                     if (!matchesSkill) return;
 
-                    if (applyNumericalBonus && typeof noteObj.numericalBonus === 'number') {
+                    if (isNoteEnabled && typeof noteObj.numericalBonus === 'number') {
                         itemBonusTotal += noteObj.numericalBonus;
                     }
 
@@ -49,21 +51,23 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                         const bonusPart = typeof noteObj.numericalBonus === 'number'
                             ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + ')</strong>'
                             : '';
-                        matchedNotes.push(escapeHtml(noteObj.note) + bonusPart);
+                        const noteColor = isNoteEnabled ? '' : 'color:#aaa;';
+                        itemNoteElements.push(
+                            '<label style="cursor:pointer;display:block;' + noteColor + '">' +
+                            '<input class="roll-skill-note-toggle" data-note-key="' + noteKey + '" type="checkbox" ' + (isNoteEnabled ? 'checked' : '') + ' style="margin-right:6px;" />' +
+                            escapeHtml(noteObj.note) + bonusPart +
+                            '</label>'
+                        );
                     }
                 });
             }
 
-            if (!matchedNotes.length) return;
+            if (!itemNoteElements.length) return;
 
-            const itemColor = applyNumericalBonus ? '' : 'color:#aaa;';
             foundNotes.push(
-                '<div class="muted" style="margin-top:4px;' + itemColor + '">' +
-                '<label style="cursor:pointer;' + itemColor + '">' +
-                '<input class="roll-item-toggle" data-item-index="' + itemIndex + '" type="checkbox" ' + (applyNumericalBonus ? 'checked' : '') + ' style="margin-right:6px;" />' +
+                '<div class="muted" style="margin-top:8px;border-left:2px solid #999;padding-left:8px;">' +
                 '<strong>' + escapeHtml(item.name || ('Item ' + (itemIndex + 1))) + '</strong>' +
-                '</label>' +
-                '<div style="margin-left:16px;' + itemColor + '">' + matchedNotes.join('<br>') + '</div>' +
+                '<div style="margin-top:4px;">' + itemNoteElements.join('') + '</div>' +
                 '</div>'
             );
         });
@@ -75,7 +79,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         return { notesHtml, itemBonusTotal };
     }
 
-    function buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledItemIndexes) {
+    function buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledSkillNotes) {
         const skillValue = computeSkillValue(level1, level2, level3, level4, rollConfig);
         const basiswertMultiplier = typeof rollConfig.BasiswertMultiplier === 'number' ? rollConfig.BasiswertMultiplier : 1;
         const basiswert = window._importedCharacter.Attribute.Basiswert[base];
@@ -83,7 +87,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const zehnerStelleMultiplikator = rollConfig['10erStelleMultiplikator'] ? rollConfig['10erStelleMultiplikator'] : 0;
         const basisWertPunkte = window._importedCharacter.Attribute.Punkte[base] || 0;
         const basisWertPunkteMultiplikator = rollConfig.BasisWertPunkteMultiplikator || 0;
-        const itemNotes = collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledItemIndexes);
+        const itemNotes = collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledSkillNotes);
 
         const overallValue = (basiswert * basiswertMultiplier) + skillValue + (zehnerStelle * zehnerStelleMultiplikator) + (basisWertPunkte * basisWertPunkteMultiplikator) + itemNotes.itemBonusTotal;
 
@@ -125,7 +129,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             '</div>';
     }
 
-    function displayRollInfo(level1, level2, level3, level4, enabledItemIndexes, preferredBase) {
+    function displayRollInfo(level1, level2, level3, level4, enabledSkillNotes, preferredBase) {
         if (!level1) return 'No roll selected';
 
         const selectedSkill = level4 || level3 || level2;
@@ -138,7 +142,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         }
 
         const baseEntries = rollConfig.BasisWert.map((base) =>
-            buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledItemIndexes)
+            buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledSkillNotes)
         );
 
         if (!baseEntries.length) {
@@ -240,11 +244,17 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const rollSearchList = document.getElementById('rollSearchList');
         const rollResult = document.getElementById('rollResult');
         const rollSelectorClose = document.getElementById('rollSelectorClose');
-        const enabledItemIndexes = new Set(
-            charData && charData.inventory && Array.isArray(charData.inventory.items)
-                ? charData.inventory.items.map((_, index) => index)
-                : []
-        );
+        
+        // Initialize enabled skill notes - start with all skill notes enabled
+        const enabledSkillNotes = new Set();
+        const items = charData && charData.inventory && Array.isArray(charData.inventory.items) ? charData.inventory.items : [];
+        items.forEach((item, itemIndex) => {
+            if (Array.isArray(item.skillNotes)) {
+                item.skillNotes.forEach((_, noteIndex) => {
+                    enabledSkillNotes.add(itemIndex + '-' + noteIndex);
+                });
+            }
+        });
 
         function renderRollHtml(nextHtml) {
             rollResult.innerHTML = nextHtml;
@@ -273,13 +283,13 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             const level3Value = levels.level2 && levels.level3 && level2Value ? level2Value[levels.level3] : undefined;
 
             if (levels.level4) {
-                renderRollHtml('<strong>' + displayRollInfo(selectedParent, levels.level2, levels.level3, levels.level4, enabledItemIndexes, currentBase) + '</strong>');
+                renderRollHtml('<strong>' + displayRollInfo(selectedParent, levels.level2, levels.level3, levels.level4, enabledSkillNotes, currentBase) + '</strong>');
                 return;
             }
 
             if (levels.level3) {
                 if (typeof level3Value !== 'object' || level3Value === null || Array.isArray(level3Value)) {
-                    renderRollHtml('<strong>' + displayRollInfo(selectedParent, levels.level2, levels.level3, undefined, enabledItemIndexes, currentBase) + '</strong>');
+                    renderRollHtml('<strong>' + displayRollInfo(selectedParent, levels.level2, levels.level3, undefined, enabledSkillNotes, currentBase) + '</strong>');
                     return;
                 }
                 renderRollHtml('');
@@ -287,7 +297,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             }
 
             if (typeof level2Value !== 'object' || level2Value === null || Array.isArray(level2Value)) {
-                renderRollHtml('<strong>' + displayRollInfo(selectedParent, levels.level2, undefined, undefined, enabledItemIndexes, currentBase) + '</strong>');
+                renderRollHtml('<strong>' + displayRollInfo(selectedParent, levels.level2, undefined, undefined, enabledSkillNotes, currentBase) + '</strong>');
                 return;
             }
 
@@ -314,16 +324,16 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 updateRollResult(target.value);
                 return;
             }
-            if (!(target instanceof HTMLInputElement) || !target.classList.contains('roll-item-toggle')) return;
+            if (!(target instanceof HTMLInputElement) || !target.classList.contains('roll-skill-note-toggle')) return;
 
             const currentBase = rollResult.querySelector('#basiswertSelect') ? rollResult.querySelector('#basiswertSelect').value : '';
-            const itemIndex = Number(target.getAttribute('data-item-index'));
-            if (!Number.isInteger(itemIndex)) return;
+            const noteKey = target.getAttribute('data-note-key');
+            if (!noteKey) return;
 
             if (target.checked) {
-                enabledItemIndexes.add(itemIndex);
+                enabledSkillNotes.add(noteKey);
             } else {
-                enabledItemIndexes.delete(itemIndex);
+                enabledSkillNotes.delete(noteKey);
             }
             updateRollResult(currentBase);
         }, true);
