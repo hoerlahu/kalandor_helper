@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { setupCharacterCreationFeature } from '../../characterCreationFeature.js';
+import { setupCharacterCreationFeature } from '../../src/features/characterCreationFeature.js';
+
+function getSkillInput(panel, category, skillName) {
+  return panel.querySelector(`[data-skill-category="${category}"][data-skill-name="${skillName}"]`);
+}
 
 describe('setupCharacterCreationFeature', () => {
   let showMessage;
@@ -25,10 +29,11 @@ describe('setupCharacterCreationFeature', () => {
     expect(document.getElementById('createCharacterBtn')).not.toBeNull();
     expect(document.querySelectorAll('[data-attr-basis]').length).toBe(9);
     expect(document.querySelectorAll('[data-attr-punkte]').length).toBe(9);
-    expect(document.getElementById('skill-Körperlich-0')).not.toBeNull();
-    expect(document.getElementById('skill-Kampf-0')).not.toBeNull();
-    expect(document.getElementById('skill-Sozial-0')).not.toBeNull();
-    expect(document.getElementById('skill-Bildung-0')).not.toBeNull();
+    const panel = document.getElementById('characterCreationPanel');
+    expect(getSkillInput(panel, 'Körperlich', 'Athletik')).not.toBeNull();
+    expect(getSkillInput(panel, 'Kampf', 'Ausweichen')).not.toBeNull();
+    expect(getSkillInput(panel, 'Sozial', 'Aufmerksamkeit')).not.toBeNull();
+    expect(getSkillInput(panel, 'Bildung', 'Astronomie')).not.toBeNull();
     expect(document.querySelectorAll('.cc-disziplin-row').length).toBe(3);
   });
 
@@ -52,8 +57,8 @@ describe('setupCharacterCreationFeature', () => {
     panel.querySelector('[data-char-field="Disziplin"]').value = 'Feuerzauber';
     panel.querySelector('[data-attr-basis="Staerke"]').value = '66';
     panel.querySelector('[data-attr-punkte="Willenskraft"]').value = '4';
-    panel.querySelector('#skill-Körperlich-0').value = '2'; // Athletik
-    panel.querySelector('#skill-Kampf-0').value = '3'; // Äxte
+    getSkillInput(panel, 'Körperlich', 'Athletik').value = '2';
+    getSkillInput(panel, 'Kampf', 'Äxte').value = '3';
     panel.querySelector('#disziplin-key-0').value = 'Feuerzauber';
     panel.querySelector('#disziplin-value-0').value = '2';
     panel.querySelector('#disziplin-key-1').value = 'Schmiedekunst';

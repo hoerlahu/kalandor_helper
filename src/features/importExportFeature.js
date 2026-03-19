@@ -116,8 +116,6 @@ export function setupImportExportFeature(showMessage, escapeHtml) {
 
         reader.onerror = () => showMessage('Failed to read file.', true);
         reader.readAsText(file, 'utf-8');
-
-        // Allow selecting the same file again.
         fileInput.value = '';
     });
 }

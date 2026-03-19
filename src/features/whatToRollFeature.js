@@ -1,8 +1,7 @@
 export function setupWhatToRollFeature(showMessage, escapeHtml) {
-    // roll computation helper previously in main.js
     function displayRollInfo(level1, level2, level3, level4, enabledItemIndexes) {
         let roll = level1;
-        if (!level1) return "No roll selected";
+        if (!level1) return 'No roll selected';
         if (level2) roll = level2;
         if (level3) roll = level3;
         if (level4) roll = level4;
@@ -10,137 +9,127 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
         const config = window._config || {};
         if (!config[roll]) {
-            // If no specific config for the selected roll, try to use __DEFAULT__ config if available
-            roll = "__DEFAULT__";
+            roll = '__DEFAULT__';
         }
-        // config object will be imported from main via closure later
+
         if (config && config[roll]) {
-            let output = "";
-            config[roll].BasisWert.forEach(base => {
+            let output = '';
+            config[roll].BasisWert.forEach((base) => {
                 let skillValue = 0;
-                if(level1 && level2 && level3 && level4){
+                if (level1 && level2 && level3 && level4) {
                     skillValue = window._importedCharacter[level1][level2][level3][level4] * config[roll].WertMultiplikator;
-                } else if(level1 && level2 && level3){
+                } else if (level1 && level2 && level3) {
                     skillValue = window._importedCharacter[level1][level2][level3] * config[roll].WertMultiplikator;
                 }
-                // Use BasiswertMultiplier if present, default to 1
+
                 const basiswertMultiplier = typeof config[roll].BasiswertMultiplier === 'number' ? config[roll].BasiswertMultiplier : 1;
-                const basiswert = window._importedCharacter["Attribute"]["Basiswert"][base];
-                
-                const zehnerStelle = Math.floor(window._importedCharacter["Attribute"]["Basiswert"][base] / 10);
+                const basiswert = window._importedCharacter.Attribute.Basiswert[base];
+
+                const zehnerStelle = Math.floor(window._importedCharacter.Attribute.Basiswert[base] / 10);
                 const zehnerStelleMultiplikator = config[roll]['10erStelleMultiplikator'] ? config[roll]['10erStelleMultiplikator'] : 0;
 
-                const basisWertPunkte = window._importedCharacter["Attribute"]["Punkte"][base] || 0;
-                const basisWertPunkteMultiplikator = config[roll]['BasisWertPunkteMultiplikator'] || 0;
+                const basisWertPunkte = window._importedCharacter.Attribute.Punkte[base] || 0;
+                const basisWertPunkteMultiplikator = config[roll].BasisWertPunkteMultiplikator || 0;
 
                 let notesHtml = '';
                 let itemBonusTotal = 0;
                 if (selectedSkill && window._importedCharacter && window._importedCharacter.inventory && Array.isArray(window._importedCharacter.inventory.items)) {
-                const items = window._importedCharacter.inventory.items;
-                let foundNotes = [];
+                    const items = window._importedCharacter.inventory.items;
+                    const foundNotes = [];
 
-                items.forEach((item, itemIndex) => {
-                    const applyNumericalBonus = !enabledItemIndexes || enabledItemIndexes.has(itemIndex);
-                    const matchedNotes = [];
+                    items.forEach((item, itemIndex) => {
+                        const applyNumericalBonus = !enabledItemIndexes || enabledItemIndexes.has(itemIndex);
+                        const matchedNotes = [];
 
-                    if (Array.isArray(item.skillNotes)) {
-                        item.skillNotes.forEach(noteObj => {
-                            if (noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3) {
-                                if (applyNumericalBonus && typeof noteObj.numericalBonus === 'number') {
-                                    itemBonusTotal += noteObj.numericalBonus;
+                        if (Array.isArray(item.skillNotes)) {
+                            item.skillNotes.forEach((noteObj) => {
+                                if (noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3) {
+                                    if (applyNumericalBonus && typeof noteObj.numericalBonus === 'number') {
+                                        itemBonusTotal += noteObj.numericalBonus;
+                                    }
+                                    if (noteObj.note) {
+                                        const bonusPart = typeof noteObj.numericalBonus === 'number'
+                                            ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + ')</strong>'
+                                            : '';
+                                        matchedNotes.push(escapeHtml(noteObj.note) + bonusPart);
+                                    }
                                 }
-                                if (noteObj.note) {
-                                    const bonusPart = typeof noteObj.numericalBonus === 'number'
-                                        ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + ')</strong>'
-                                        : '';
-                                    matchedNotes.push(escapeHtml(noteObj.note) + bonusPart);
-                                }
-                            }
-                        });
-                    }
+                            });
+                        }
 
-                    if (matchedNotes.length) {
-                        const itemColor = applyNumericalBonus ? '' : 'color:#aaa;';
-                        foundNotes.push(
-                            '<div class="muted" style="margin-top:4px;' + itemColor + '">' +
-                            '<label style="cursor:pointer;' + itemColor + '">' +
-                            '<input class="roll-item-toggle" data-item-index="' + itemIndex + '" type="checkbox" ' + (applyNumericalBonus ? 'checked' : '') + ' style="margin-right:6px;" />' +
-                            '<strong>' + escapeHtml(item.name || ('Item ' + (itemIndex + 1))) + '</strong>' +
-                            '</label>' +
-                            '<div style="margin-left:16px;' + itemColor + '">' + matchedNotes.join('<br>') + '</div>' +
-                            '</div>'
-                        );
+                        if (matchedNotes.length) {
+                            const itemColor = applyNumericalBonus ? '' : 'color:#aaa;';
+                            foundNotes.push(
+                                '<div class="muted" style="margin-top:4px;' + itemColor + '">' +
+                                '<label style="cursor:pointer;' + itemColor + '">' +
+                                '<input class="roll-item-toggle" data-item-index="' + itemIndex + '" type="checkbox" ' + (applyNumericalBonus ? 'checked' : '') + ' style="margin-right:6px;" />' +
+                                '<strong>' + escapeHtml(item.name || ('Item ' + (itemIndex + 1))) + '</strong>' +
+                                '</label>' +
+                                '<div style="margin-left:16px;' + itemColor + '">' + matchedNotes.join('<br>') + '</div>' +
+                                '</div>'
+                            );
+                        }
+                    });
+                    if (foundNotes.length) {
+                        notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
                     }
-                });
-                if (foundNotes.length) {
-                    notesHtml = '<div style="margin-top:10px;">' + foundNotes.join('') + '</div>';
                 }
-            }
 
                 const overallValue = (basiswert * basiswertMultiplier) + skillValue + (zehnerStelle * zehnerStelleMultiplikator) + (basisWertPunkte * basisWertPunkteMultiplikator) + itemBonusTotal;
-            
 
-                output += "<br>" +
-                    "<details data-roll-base='" + escapeHtml(base) + "' style='margin-top:8px;'>" +
-                    "<summary style='cursor:pointer;color:#0366d6;'>" + base + "</summary>" +
-                    "<div style='margin-left:16px;margin-top:8px;'>" +
-                    "Basiswert: " + basiswert + "<br>" +
-                    "BasiswertMultiplier: " + basiswertMultiplier + "<br>" +
-                    "10s Place Attributes: " + (config[roll]['10erStelle'] ? (zehnerStelle * zehnerStelleMultiplikator) : "No") + "<br>" +
-                    "BasiswertPunkte: " + (basisWertPunkte * basisWertPunkteMultiplikator) + "<br>" +
-                    "Skillpunkte: " + (skillValue) + "<br>" +
-                    "Item-Boni: " + (itemBonusTotal >= 0 ? '+' : '') + itemBonusTotal + "<br>" +
-                    "<br>" +
-                    "Grundwert: " + overallValue + "<br>" +
-                    "<br>" +
-                    "Roll20: <code>/r 1d100-" + overallValue + "</code>" +
-                    " <button type='button' class='btn-secondary' style='padding:2px 8px;font-size:0.85em;' onclick=\"navigator.clipboard.writeText('/r 1d100-" + overallValue + "')\">Copy</button><br>" +
-                    "<br>" +
-                    "Items: " + (notesHtml ? notesHtml : "None") + "<br>"+
-                    "</div>" +
-                    "</details>";
+                output += '<br>' +
+                    '<details data-roll-base="' + escapeHtml(base) + '" style="margin-top:8px;">' +
+                    '<summary style="cursor:pointer;color:#0366d6;">' + base + '</summary>' +
+                    '<div style="margin-left:16px;margin-top:8px;">' +
+                    'Basiswert: ' + basiswert + '<br>' +
+                    'BasiswertMultiplier: ' + basiswertMultiplier + '<br>' +
+                    '10s Place Attributes: ' + (config[roll]['10erStelle'] ? (zehnerStelle * zehnerStelleMultiplikator) : 'No') + '<br>' +
+                    'BasiswertPunkte: ' + (basisWertPunkte * basisWertPunkteMultiplikator) + '<br>' +
+                    'Skillpunkte: ' + skillValue + '<br>' +
+                    'Item-Boni: ' + (itemBonusTotal >= 0 ? '+' : '') + itemBonusTotal + '<br>' +
+                    '<br>' +
+                    'Grundwert: ' + overallValue + '<br>' +
+                    '<br>' +
+                    'Roll20: <code>/r 1d100-' + overallValue + '</code>' +
+                    ' <button type="button" class="btn-secondary" style="padding:2px 8px;font-size:0.85em;" onclick="navigator.clipboard.writeText(\'/r 1d100-' + overallValue + '\')">Copy</button><br>' +
+                    '<br>' +
+                    'Items: ' + (notesHtml ? notesHtml : 'None') + '<br>' +
+                    '</div>' +
+                    '</details>';
             });
-            
+
             return output;
-        } else {
-            return "No configuration found for roll: " + roll;
         }
+
+        return 'No configuration found for roll: ' + roll;
     }
+
     const whatToRollFeature = document.getElementById('whatToRollFeature');
-    if (!whatToRollFeature) return; // safety
+    if (!whatToRollFeature) return;
 
     whatToRollFeature.addEventListener('click', () => {
         if (!window._importedCharacter) {
             showMessage('This feature helps you find out what influences your rolls. Import a character first!', false);
             return;
         }
-        const supportedRoll = 'Skills'; // we focus on Skills section for roll selection
+        const supportedRoll = 'Skills';
         const rollSelector = document.getElementById('rollSelector');
         const charData = window._importedCharacter;
 
-        // Create HTML for dropdowns
         let html = '<div style="padding:12px;border-radius:6px;background:#f1f8ff;border:1px solid #cfe6ff;">';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">';
         html += '<h3 style="margin:0;">What do I roll?</h3>';
         html += '<button id="rollSelectorClose" type="button" class="btn-secondary">Close</button>';
         html += '</div>';
-
-        // Child dropdown (hidden initially)
         html += '<label style="display:block;margin-bottom:10px;" id="childLabel"><strong>Property:</strong></label>';
         html += '<select id="childSelect" style="padding:8px;margin-bottom:15px;display:none;">';
         html += '</select>';
-
-        // Grandchild dropdown (hidden initially)
         html += '<label style="display:block;margin-bottom:10px;" id="grandchildLabel"><strong>Sub-property:</strong></label>';
         html += '<select id="grandchildSelect" style="padding:8px;margin-bottom:15px;display:none;">';
         html += '</select>';
-
-        // Great-grandchild dropdown (hidden initially)
         html += '<label style="display:block;margin-bottom:10px;" id="greatgrandchildLabel"><strong>Sub-sub-property:</strong></label>';
         html += '<select id="greatgrandchildSelect" style="padding:8px;margin-bottom:15px;display:none;">';
         html += '</select>';
-
-        // Result display
         html += '<div id="rollResult" style="margin-top:15px;font-weight:bold;"></div>';
         html += '</div>';
 
@@ -149,7 +138,6 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const importResult = document.getElementById('importResult');
         importResult.style.display = 'none';
 
-        // Add event listeners
         const childSelect = document.getElementById('childSelect');
         const childLabel = document.getElementById('childLabel');
         const grandchildSelect = document.getElementById('grandchildSelect');
@@ -159,9 +147,9 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const rollResult = document.getElementById('rollResult');
         const rollSelectorClose = document.getElementById('rollSelectorClose');
         const enabledItemIndexes = new Set(
-            (charData && charData.inventory && Array.isArray(charData.inventory.items)
+            charData && charData.inventory && Array.isArray(charData.inventory.items)
                 ? charData.inventory.items.map((_, index) => index)
-                : [])
+                : []
         );
 
         function updateRollResult() {
@@ -175,8 +163,8 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     .filter(Boolean)
             );
 
-            function renderRollHtml(html) {
-                rollResult.innerHTML = html;
+            function renderRollHtml(nextHtml) {
+                rollResult.innerHTML = nextHtml;
                 if (!openDetails.size) return;
                 rollResult.querySelectorAll('details[data-roll-base]').forEach((detail) => {
                     if (openDetails.has(detail.getAttribute('data-roll-base'))) {
@@ -248,40 +236,34 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         }
 
         const parentData = charData[selectedParent];
-
-        // Get all skill keys, and add 'Absorbtion' if not present
         let childKeys = Object.keys(parentData);
-        // Add general skills from config if not present
         let generalSkills = [];
         if (window._config) {
-            // Add skills from generalSkills array
             if (Array.isArray(window._config.generalSkills)) {
                 generalSkills = window._config.generalSkills.slice();
             }
-            // Add any skill with MetaSkill: true
-            Object.keys(window._config).forEach(k => {
-                const v = window._config[k];
-                if (typeof v === 'object' && v.MetaSkill === true && !generalSkills.includes(k)) {
-                    generalSkills.push(k);
+            Object.keys(window._config).forEach((key) => {
+                const value = window._config[key];
+                if (typeof value === 'object' && value.MetaSkill === true && !generalSkills.includes(key)) {
+                    generalSkills.push(key);
                 }
             });
         }
-        generalSkills.forEach(skill => {
+        generalSkills.forEach((skill) => {
             if (!childKeys.includes(skill)) {
                 childKeys.push(skill);
             }
         });
 
         childSelect.innerHTML = '<option value="">Select a property...</option>';
-        childKeys.forEach(key => {
-            // For general skills, treat as a leaf (number or 0)
+        childKeys.forEach((key) => {
             let displayText = escapeHtml(key);
-            let val = parentData[key];
-            if (generalSkills.includes(key) && (val === undefined || val === null)) {
-                val = 0;
+            let value = parentData[key];
+            if (generalSkills.includes(key) && (value === undefined || value === null)) {
+                value = 0;
             }
-            if (typeof val !== 'object' || val === null) {
-                displayText += ': ' + escapeHtml(String(val));
+            if (typeof value !== 'object' || value === null) {
+                displayText += ': ' + escapeHtml(String(value));
             } else {
                 displayText += ' (Object)';
             }
@@ -305,20 +287,18 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
             const value = charData[selectedParent][selectedChild];
 
-            // Check if value is an object
             if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                 const grandchildKeys = Object.keys(value);
 
                 grandchildSelect.innerHTML = '<option value="">Select a sub-property...</option>';
-                grandchildKeys.forEach(key => {
+                grandchildKeys.forEach((key) => {
                     grandchildSelect.innerHTML += '<option value="' + escapeHtml(key) + '">' + escapeHtml(key) + ': ' + escapeHtml(String(value[key])) + '</option>';
                 });
 
                 grandchildSelect.style.display = 'block';
                 grandchildLabel.style.display = 'block';
             } else {
-                // Leaf value reached
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild, undefined, undefined, enabledItemIndexes) + '</strong>';
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent, selectedChild, undefined, undefined, enabledItemIndexes) + '</strong>';
                 grandchildSelect.style.display = 'none';
                 grandchildLabel.style.display = 'none';
             }
@@ -337,20 +317,18 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
             const value = charData[selectedParent][selectedChild][selectedGrandchild];
 
-            // Check if value is an object
             if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                 const greatgrandchildKeys = Object.keys(value);
 
                 greatgrandchildSelect.innerHTML = '<option value="">Select a sub-sub-property...</option>';
-                greatgrandchildKeys.forEach(key => {
+                greatgrandchildKeys.forEach((key) => {
                     greatgrandchildSelect.innerHTML += '<option value="' + escapeHtml(key) + '">' + escapeHtml(key) + ': ' + escapeHtml(String(value[key])) + '</option>';
                 });
 
                 greatgrandchildSelect.style.display = 'block';
                 greatgrandchildLabel.style.display = 'block';
             } else {
-                // Leaf value reached
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild, undefined, enabledItemIndexes) + '</strong>';
+                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, undefined, enabledItemIndexes) + '</strong>';
                 greatgrandchildSelect.style.display = 'none';
                 greatgrandchildLabel.style.display = 'none';
             }
@@ -366,7 +344,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 return;
             }
 
-            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent,selectedChild,selectedGrandchild,selectedGreatgrandchild, enabledItemIndexes) + '</strong>';
+            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, selectedGreatgrandchild, enabledItemIndexes) + '</strong>';
         });
     });
 }

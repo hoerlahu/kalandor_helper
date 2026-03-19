@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { setupImportExportFeature } from '../../importExportFeature.js';
+import { setupImportExportFeature } from '../../src/features/importExportFeature.js';
 
 describe('setupImportExportFeature', () => {
   let showMessage;

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { setupWhatToRollFeature } from '../../whatToRollFeature.js';
+import { setupWhatToRollFeature } from '../../src/features/whatToRollFeature.js';
 
 describe('setupWhatToRollFeature', () => {
   let showMessage;
