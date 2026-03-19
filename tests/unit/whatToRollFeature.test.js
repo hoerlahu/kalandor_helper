@@ -1,6 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { setupWhatToRollFeature } from '../../src/features/whatToRollFeature.js';
 
+function selectAthletikRoll() {
+  const childSelect = document.getElementById('childSelect');
+  childSelect.value = 'Ausbildung';
+  childSelect.dispatchEvent(new Event('change'));
+
+  const grandchildSelect = document.getElementById('grandchildSelect');
+  grandchildSelect.value = 'Korperlich';
+  grandchildSelect.dispatchEvent(new Event('change'));
+
+  const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
+  greatgrandchildSelect.value = 'Athletik';
+  greatgrandchildSelect.dispatchEvent(new Event('change'));
+}
+
 describe('setupWhatToRollFeature', () => {
   let showMessage;
 
@@ -55,20 +69,10 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-
-    const childSelect = document.getElementById('childSelect');
-    childSelect.value = 'Ausbildung';
-    childSelect.dispatchEvent(new Event('change'));
-
-    const grandchildSelect = document.getElementById('grandchildSelect');
-    grandchildSelect.value = 'Korperlich';
-    grandchildSelect.dispatchEvent(new Event('change'));
-
-    const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
-    greatgrandchildSelect.value = 'Athletik';
-    greatgrandchildSelect.dispatchEvent(new Event('change'));
+    selectAthletikRoll();
 
     expect(document.getElementById('rollResult').innerHTML).toContain('Grundwert');
+    expect(document.getElementById('basiswertSelect')).not.toBeNull();
   });
 
   it('includes config general skills in first dropdown even when missing on character', () => {
@@ -160,6 +164,87 @@ describe('setupWhatToRollFeature', () => {
     expect(document.getElementById('rollSelector').innerHTML).toBe('');
   });
 
+  it('uses the first Basiswert as default and only shows that Basiswert details', () => {
+    window._config = {
+      __DEFAULT__: {
+        BasisWert: ['Beweglichkeit', 'Willenskraft'],
+        BasiswertMultiplier: 1,
+        '10erStelleMultiplikator': 0,
+        BasisWertPunkteMultiplikator: 0,
+        WertMultiplikator: 10
+      }
+    };
+
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70, Willenskraft: 55 },
+        Punkte: { Beweglichkeit: 3, Willenskraft: 1 }
+      },
+      inventory: {
+        items: []
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+    selectAthletikRoll();
+
+    const basiswertSelect = document.getElementById('basiswertSelect');
+    expect(basiswertSelect).not.toBeNull();
+    expect(basiswertSelect.value).toBe('Beweglichkeit');
+    expect(document.getElementById('rollResult').innerHTML).toContain('Basiswert: 70');
+    expect(document.getElementById('rollResult').innerHTML).not.toContain('Basiswert: 55');
+    expect(document.querySelectorAll('#rollResult #basiswertInfo').length).toBe(1);
+  });
+
+  it('updates the displayed roll info when a different Basiswert is selected', () => {
+    window._config = {
+      __DEFAULT__: {
+        BasisWert: ['Beweglichkeit', 'Willenskraft'],
+        BasiswertMultiplier: 1,
+        '10erStelleMultiplikator': 0,
+        BasisWertPunkteMultiplikator: 0,
+        WertMultiplikator: 10
+      }
+    };
+
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70, Willenskraft: 55 },
+        Punkte: { Beweglichkeit: 3, Willenskraft: 1 }
+      },
+      inventory: {
+        items: []
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+    selectAthletikRoll();
+
+    const basiswertSelect = document.getElementById('basiswertSelect');
+    basiswertSelect.value = 'Willenskraft';
+    basiswertSelect.dispatchEvent(new Event('change'));
+
+    expect(document.getElementById('rollResult').innerHTML).toContain('Basiswert: 55');
+    expect(document.getElementById('rollResult').innerHTML).not.toContain('Basiswert: 70');
+    expect(document.querySelector('#basiswertInfo').getAttribute('data-roll-base')).toBe('Willenskraft');
+  });
+
   it('renders matching item notes in roll details output', () => {
     window._importedCharacter = {
       Skills: {
@@ -185,18 +270,7 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-
-    const childSelect = document.getElementById('childSelect');
-    childSelect.value = 'Ausbildung';
-    childSelect.dispatchEvent(new Event('change'));
-
-    const grandchildSelect = document.getElementById('grandchildSelect');
-    grandchildSelect.value = 'Korperlich';
-    grandchildSelect.dispatchEvent(new Event('change'));
-
-    const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
-    greatgrandchildSelect.value = 'Athletik';
-    greatgrandchildSelect.dispatchEvent(new Event('change'));
+    selectAthletikRoll();
 
     expect(document.getElementById('rollResult').innerHTML).toContain('Grip Gloves');
     expect(document.getElementById('rollResult').innerHTML).toContain('Add traction bonus');
@@ -225,18 +299,7 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-
-    const childSelect = document.getElementById('childSelect');
-    childSelect.value = 'Ausbildung';
-    childSelect.dispatchEvent(new Event('change'));
-
-    const grandchildSelect = document.getElementById('grandchildSelect');
-    grandchildSelect.value = 'Korperlich';
-    grandchildSelect.dispatchEvent(new Event('change'));
-
-    const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
-    greatgrandchildSelect.value = 'Athletik';
-    greatgrandchildSelect.dispatchEvent(new Event('change'));
+    selectAthletikRoll();
 
     const checkboxes = document.querySelectorAll('#rollResult .roll-item-toggle');
     expect(checkboxes.length).toBe(2);
@@ -267,18 +330,7 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-
-    const childSelect = document.getElementById('childSelect');
-    childSelect.value = 'Ausbildung';
-    childSelect.dispatchEvent(new Event('change'));
-
-    const grandchildSelect = document.getElementById('grandchildSelect');
-    grandchildSelect.value = 'Korperlich';
-    grandchildSelect.dispatchEvent(new Event('change'));
-
-    const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
-    greatgrandchildSelect.value = 'Athletik';
-    greatgrandchildSelect.dispatchEvent(new Event('change'));
+    selectAthletikRoll();
 
     let resultHtml = document.getElementById('rollResult').innerHTML;
     expect(resultHtml).toContain('Item-Boni: +10');
@@ -293,7 +345,17 @@ describe('setupWhatToRollFeature', () => {
     expect(window._importedCharacter.inventory.items[0].applyNumericalModifier).toBeUndefined();
   });
 
-  it('keeps opened roll detail expanded when item checkbox is toggled', () => {
+  it('keeps the selected Basiswert when item checkbox is toggled', () => {
+    window._config = {
+      __DEFAULT__: {
+        BasisWert: ['Beweglichkeit', 'Willenskraft'],
+        BasiswertMultiplier: 1,
+        '10erStelleMultiplikator': 0,
+        BasisWertPunkteMultiplikator: 0,
+        WertMultiplikator: 10
+      }
+    };
+
     window._importedCharacter = {
       Skills: {
         Ausbildung: {
@@ -303,8 +365,8 @@ describe('setupWhatToRollFeature', () => {
         }
       },
       Attribute: {
-        Basiswert: { Beweglichkeit: 70 },
-        Punkte: { Beweglichkeit: 3 }
+        Basiswert: { Beweglichkeit: 70, Willenskraft: 55 },
+        Punkte: { Beweglichkeit: 3, Willenskraft: 1 }
       },
       inventory: {
         items: [
@@ -318,28 +380,19 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
+    selectAthletikRoll();
 
-    const childSelect = document.getElementById('childSelect');
-    childSelect.value = 'Ausbildung';
-    childSelect.dispatchEvent(new Event('change'));
-
-    const grandchildSelect = document.getElementById('grandchildSelect');
-    grandchildSelect.value = 'Korperlich';
-    grandchildSelect.dispatchEvent(new Event('change'));
-
-    const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
-    greatgrandchildSelect.value = 'Athletik';
-    greatgrandchildSelect.dispatchEvent(new Event('change'));
-
-    const detailBefore = document.querySelector('#rollResult details[data-roll-base="Beweglichkeit"]');
-    detailBefore.open = true;
+    const basiswertSelect = document.getElementById('basiswertSelect');
+    basiswertSelect.value = 'Willenskraft';
+    basiswertSelect.dispatchEvent(new Event('change'));
 
     const itemToggle = document.querySelector('#rollResult .roll-item-toggle');
     itemToggle.checked = false;
     itemToggle.dispatchEvent(new Event('change'));
 
-    const detailAfter = document.querySelector('#rollResult details[data-roll-base="Beweglichkeit"]');
-    expect(detailAfter).not.toBeNull();
-    expect(detailAfter.open).toBe(true);
+    const basiswertSelectAfter = document.getElementById('basiswertSelect');
+    expect(basiswertSelectAfter).not.toBeNull();
+    expect(basiswertSelectAfter.value).toBe('Willenskraft');
+    expect(document.querySelector('#basiswertInfo').getAttribute('data-roll-base')).toBe('Willenskraft');
   });
 });

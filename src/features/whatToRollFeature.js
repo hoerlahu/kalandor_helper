@@ -1,5 +1,5 @@
 export function setupWhatToRollFeature(showMessage, escapeHtml) {
-    function displayRollInfo(level1, level2, level3, level4, enabledItemIndexes) {
+    function displayRollInfo(level1, level2, level3, level4, enabledItemIndexes, preferredBase) {
         let roll = level1;
         if (!level1) return 'No roll selected';
         if (level2) roll = level2;
@@ -13,7 +13,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         }
 
         if (config && config[roll]) {
-            let output = '';
+            const baseEntries = [];
             config[roll].BasisWert.forEach((base) => {
                 let skillValue = 0;
                 if (level1 && level2 && level3 && level4) {
@@ -77,28 +77,43 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
                 const overallValue = (basiswert * basiswertMultiplier) + skillValue + (zehnerStelle * zehnerStelleMultiplikator) + (basisWertPunkte * basisWertPunkteMultiplikator) + itemBonusTotal;
 
-                output += '<br>' +
-                    '<details data-roll-base="' + escapeHtml(base) + '" style="margin-top:8px;">' +
-                    '<summary style="cursor:pointer;color:#0366d6;">' + base + '</summary>' +
-                    '<div style="margin-left:16px;margin-top:8px;">' +
-                    'Basiswert: ' + basiswert + '<br>' +
-                    'BasiswertMultiplier: ' + basiswertMultiplier + '<br>' +
-                    '10s Place Attributes: ' + (config[roll]['10erStelle'] ? (zehnerStelle * zehnerStelleMultiplikator) : 'No') + '<br>' +
-                    'BasiswertPunkte: ' + (basisWertPunkte * basisWertPunkteMultiplikator) + '<br>' +
-                    'Skillpunkte: ' + skillValue + '<br>' +
-                    'Item-Boni: ' + (itemBonusTotal >= 0 ? '+' : '') + itemBonusTotal + '<br>' +
-                    '<br>' +
-                    'Grundwert: ' + overallValue + '<br>' +
-                    '<br>' +
-                    'Roll20: <code>/r 1d100-' + overallValue + '</code>' +
-                    ' <button type="button" class="btn-secondary" style="padding:2px 8px;font-size:0.85em;" onclick="navigator.clipboard.writeText(\'/r 1d100-' + overallValue + '\')">Copy</button><br>' +
-                    '<br>' +
-                    'Items: ' + (notesHtml ? notesHtml : 'None') + '<br>' +
-                    '</div>' +
-                    '</details>';
+                baseEntries.push({
+                    base,
+                    content: '<div id="basiswertInfo" data-roll-base="' + escapeHtml(base) + '" style="margin-top:8px;">' +
+                        'Basiswert: ' + basiswert + '<br>' +
+                        'BasiswertMultiplier: ' + basiswertMultiplier + '<br>' +
+                        '10s Place Attributes: ' + (config[roll]['10erStelle'] ? (zehnerStelle * zehnerStelleMultiplikator) : 'No') + '<br>' +
+                        'BasiswertPunkte: ' + (basisWertPunkte * basisWertPunkteMultiplikator) + '<br>' +
+                        'Skillpunkte: ' + skillValue + '<br>' +
+                        'Item-Boni: ' + (itemBonusTotal >= 0 ? '+' : '') + itemBonusTotal + '<br>' +
+                        '<br>' +
+                        'Grundwert: ' + overallValue + '<br>' +
+                        '<br>' +
+                        'Roll20: <code>/r 1d100-' + overallValue + '</code>' +
+                        ' <button type="button" class="btn-secondary" style="padding:2px 8px;font-size:0.85em;" onclick="navigator.clipboard.writeText(\'/r 1d100-' + overallValue + '\')">Copy</button><br>' +
+                        '<br>' +
+                        'Items: ' + (notesHtml ? notesHtml : 'None') + '<br>' +
+                        '</div>'
+                });
             });
 
-            return output;
+            if (!baseEntries.length) {
+                return 'No configuration found for roll: ' + roll;
+            }
+
+            const activeBase = baseEntries.some((entry) => entry.base === preferredBase)
+                ? preferredBase
+                : baseEntries[0].base;
+            const activeEntry = baseEntries.find((entry) => entry.base === activeBase) || baseEntries[0];
+            const basiswertOptions = baseEntries
+                .map((entry) => '<option value="' + escapeHtml(entry.base) + '"' + (entry.base === activeBase ? ' selected' : '') + '>' + escapeHtml(entry.base) + '</option>')
+                .join('');
+
+            return '<div style="margin-top:8px;">' +
+                '<label for="basiswertSelect" style="display:block;margin-bottom:8px;"><strong>Basiswert:</strong></label>' +
+                '<select id="basiswertSelect" style="padding:8px;margin-bottom:12px;">' + basiswertOptions + '</select>' +
+                activeEntry.content +
+                '</div>';
         }
 
         return 'No configuration found for roll: ' + roll;
@@ -152,25 +167,14 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 : []
         );
 
-        function updateRollResult() {
+        function updateRollResult(preferredBase) {
             const selectedChild = childSelect.value;
             const selectedGrandchild = grandchildSelect.value;
             const selectedGreatgrandchild = greatgrandchildSelect.value;
-
-            const openDetails = new Set(
-                Array.from(rollResult.querySelectorAll('details[open][data-roll-base]'))
-                    .map((detail) => detail.getAttribute('data-roll-base'))
-                    .filter(Boolean)
-            );
+            const currentBase = preferredBase || (rollResult.querySelector('#basiswertSelect') ? rollResult.querySelector('#basiswertSelect').value : '');
 
             function renderRollHtml(nextHtml) {
                 rollResult.innerHTML = nextHtml;
-                if (!openDetails.size) return;
-                rollResult.querySelectorAll('details[data-roll-base]').forEach((detail) => {
-                    if (openDetails.has(detail.getAttribute('data-roll-base'))) {
-                        detail.open = true;
-                    }
-                });
             }
 
             if (!selectedChild) {
@@ -179,21 +183,21 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             }
 
             if (selectedGreatgrandchild) {
-                renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, selectedGreatgrandchild, enabledItemIndexes) + '</strong>');
+                renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, selectedGreatgrandchild, enabledItemIndexes, currentBase) + '</strong>');
                 return;
             }
 
             if (selectedGrandchild) {
                 const grandchildValue = charData[selectedParent][selectedChild][selectedGrandchild];
                 if (typeof grandchildValue !== 'object' || grandchildValue === null || Array.isArray(grandchildValue)) {
-                    renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, undefined, enabledItemIndexes) + '</strong>');
+                    renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, undefined, enabledItemIndexes, currentBase) + '</strong>');
                     return;
                 }
             }
 
             const childValue = charData[selectedParent][selectedChild];
             if (typeof childValue !== 'object' || childValue === null || Array.isArray(childValue)) {
-                renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, undefined, undefined, enabledItemIndexes) + '</strong>');
+                renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, undefined, undefined, enabledItemIndexes, currentBase) + '</strong>');
                 return;
             }
 
@@ -208,9 +212,14 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
         rollResult.addEventListener('change', (event) => {
             const target = event.target;
+            if (target instanceof HTMLSelectElement && target.id === 'basiswertSelect') {
+                updateRollResult(target.value);
+                return;
+            }
             if (!(target instanceof HTMLInputElement)) return;
             if (!target.classList.contains('roll-item-toggle')) return;
 
+            const currentBase = rollResult.querySelector('#basiswertSelect') ? rollResult.querySelector('#basiswertSelect').value : '';
             const itemIndex = Number(target.getAttribute('data-item-index'));
             if (!Number.isInteger(itemIndex)) return;
 
@@ -219,7 +228,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             } else {
                 enabledItemIndexes.delete(itemIndex);
             }
-            updateRollResult();
+            updateRollResult(currentBase);
         }, true);
 
         const selectedParent = supportedRoll;
@@ -298,14 +307,13 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 grandchildSelect.style.display = 'block';
                 grandchildLabel.style.display = 'block';
             } else {
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent, selectedChild, undefined, undefined, enabledItemIndexes) + '</strong>';
+                updateRollResult();
                 grandchildSelect.style.display = 'none';
                 grandchildLabel.style.display = 'none';
             }
         });
 
         grandchildSelect.addEventListener('change', () => {
-            const selectedChild = childSelect.value;
             const selectedGrandchild = grandchildSelect.value;
             rollResult.innerHTML = '';
 
@@ -315,7 +323,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 return;
             }
 
-            const value = charData[selectedParent][selectedChild][selectedGrandchild];
+            const value = charData[selectedParent][childSelect.value][selectedGrandchild];
 
             if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
                 const greatgrandchildKeys = Object.keys(value);
@@ -328,15 +336,13 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 greatgrandchildSelect.style.display = 'block';
                 greatgrandchildLabel.style.display = 'block';
             } else {
-                rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, undefined, enabledItemIndexes) + '</strong>';
+                updateRollResult();
                 greatgrandchildSelect.style.display = 'none';
                 greatgrandchildLabel.style.display = 'none';
             }
         });
 
         greatgrandchildSelect.addEventListener('change', () => {
-            const selectedChild = childSelect.value;
-            const selectedGrandchild = grandchildSelect.value;
             const selectedGreatgrandchild = greatgrandchildSelect.value;
 
             if (!selectedGreatgrandchild) {
@@ -344,7 +350,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 return;
             }
 
-            rollResult.innerHTML = '<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, selectedGreatgrandchild, enabledItemIndexes) + '</strong>';
+            updateRollResult();
         });
     });
 }
