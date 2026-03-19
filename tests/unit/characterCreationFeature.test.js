@@ -161,4 +161,216 @@ describe('setupCharacterCreationFeature', () => {
 
     expect(window._importedCharacter.Attribute.Basiswert['Stärke']).toBe(50);
   });
+
+  it('opens in edit mode with loaded character values when a character is already imported', () => {
+    window._importedCharacter = {
+      Allgemein: {
+        Name: 'Aria',
+        Spezies: 'Elf',
+        Alter: '120',
+        Augenfarbe: 'Green',
+        Haarfarbe: 'Silver',
+        Größe: '170',
+        Gewicht: '60',
+        Beruf: 'Scout',
+        Disziplin: 'Windlauf'
+      },
+      Attribute: {
+        Basiswert: {
+          Stärke: 61,
+          Beweglichkeit: 72,
+          Robustheit: 55,
+          Intuition: 66,
+          Charisma: 51,
+          Glück: 47,
+          Wahrnehmung: 62,
+          Geistesschärfe: 58,
+          Willenskraft: 64
+        },
+        Punkte: {
+          Stärke: 1,
+          Beweglichkeit: 2,
+          Robustheit: 3,
+          Intuition: 4,
+          Charisma: 5,
+          Glück: 6,
+          Wahrnehmung: 7,
+          Geistesschärfe: 8,
+          Willenskraft: 9
+        }
+      },
+      Skills: {
+        Ausbildung: {
+          Körperlich: { Athletik: 3 },
+          Kampf: { Ausweichen: 4 },
+          Sozial: { Aufmerksamkeit: 5 },
+          Bildung: { Astronomie: 6 }
+        },
+        Disziplinen: {
+          Windlauf: 3,
+          Natursinn: 2,
+          Sternkunde: 1
+        }
+      },
+      inventory: { items: [] }
+    };
+
+    setupCharacterCreationFeature(showMessage, (s) => String(s));
+    document.getElementById('characterCreationFeature').click();
+
+    const panel = document.getElementById('characterCreationPanel');
+    expect(panel).not.toBeNull();
+    expect(panel.querySelector('h2').textContent).toBe('Character Edit');
+    expect(document.getElementById('createCharacterBtn').textContent).toBe('Save Character');
+    expect(panel.querySelector('[data-char-field="Name"]').value).toBe('Aria');
+    expect(panel.querySelector('[data-attr-basis="Beweglichkeit"]').value).toBe('72');
+    expect(panel.querySelector('[data-attr-punkte="Willenskraft"]').value).toBe('9');
+    expect(getSkillInput(panel, 'Körperlich', 'Athletik').value).toBe('3');
+    expect(panel.querySelector('#disziplin-key-0').value).toBe('Windlauf');
+    expect(panel.querySelector('#disziplin-value-0').value).toBe('3');
+  });
+
+  it('saves edited character values and shows updated success message in edit mode', () => {
+    window._importedCharacter = {
+      Allgemein: {
+        Name: 'Aria',
+        Spezies: 'Elf',
+        Alter: '',
+        Augenfarbe: '',
+        Haarfarbe: '',
+        Größe: '',
+        Gewicht: '',
+        Beruf: '',
+        Disziplin: ''
+      },
+      Attribute: {
+        Basiswert: {
+          Stärke: 50,
+          Beweglichkeit: 50,
+          Robustheit: 50,
+          Intuition: 50,
+          Charisma: 50,
+          Glück: 50,
+          Wahrnehmung: 50,
+          Geistesschärfe: 50,
+          Willenskraft: 50
+        },
+        Punkte: {
+          Stärke: 0,
+          Beweglichkeit: 0,
+          Robustheit: 0,
+          Intuition: 0,
+          Charisma: 0,
+          Glück: 0,
+          Wahrnehmung: 0,
+          Geistesschärfe: 0,
+          Willenskraft: 0
+        }
+      },
+      Skills: {
+        Ausbildung: {
+          Körperlich: { Athletik: 0 },
+          Kampf: { Ausweichen: 0 },
+          Sozial: { Aufmerksamkeit: 0 },
+          Bildung: { Astronomie: 0 }
+        },
+        Disziplinen: {
+          Feuerzauber: 0,
+          Schmiedekunst: 0,
+          Überleben: 0
+        }
+      },
+      inventory: { items: [] }
+    };
+
+    setupCharacterCreationFeature(showMessage, (s) => String(s));
+    document.getElementById('characterCreationFeature').click();
+
+    const panel = document.getElementById('characterCreationPanel');
+    panel.querySelector('[data-char-field="Name"]').value = 'Aria Updated';
+    panel.querySelector('[data-attr-basis="Staerke"]').value = '77';
+    getSkillInput(panel, 'Kampf', 'Ausweichen').value = '5';
+
+    document.getElementById('createCharacterBtn').click();
+
+    expect(window._importedCharacter.Allgemein.Name).toBe('Aria Updated');
+    expect(window._importedCharacter.Attribute.Basiswert['Stärke']).toBe(77);
+    expect(window._importedCharacter.Skills.Ausbildung.Kampf.Ausweichen).toBe(5);
+    expect(showMessage).toHaveBeenCalledWith(
+      'Character updated successfully! You can now continue with Inventory, What do I roll, or Export JSON.',
+      false
+    );
+  });
+
+  it('keeps existing inventory items when saving in edit mode', () => {
+    window._importedCharacter = {
+      Allgemein: {
+        Name: 'Aria',
+        Spezies: 'Elf',
+        Alter: '',
+        Augenfarbe: '',
+        Haarfarbe: '',
+        Größe: '',
+        Gewicht: '',
+        Beruf: '',
+        Disziplin: ''
+      },
+      Attribute: {
+        Basiswert: {
+          Stärke: 50,
+          Beweglichkeit: 50,
+          Robustheit: 50,
+          Intuition: 50,
+          Charisma: 50,
+          Glück: 50,
+          Wahrnehmung: 50,
+          Geistesschärfe: 50,
+          Willenskraft: 50
+        },
+        Punkte: {
+          Stärke: 0,
+          Beweglichkeit: 0,
+          Robustheit: 0,
+          Intuition: 0,
+          Charisma: 0,
+          Glück: 0,
+          Wahrnehmung: 0,
+          Geistesschärfe: 0,
+          Willenskraft: 0
+        }
+      },
+      Skills: {
+        Ausbildung: {
+          Körperlich: { Athletik: 0 },
+          Kampf: { Ausweichen: 0 },
+          Sozial: { Aufmerksamkeit: 0 },
+          Bildung: { Astronomie: 0 }
+        },
+        Disziplinen: {
+          Feuerzauber: 0,
+          Schmiedekunst: 0,
+          Überleben: 0
+        }
+      },
+      inventory: {
+        items: [
+          { name: 'Rope', quantity: 1 },
+          { name: 'Potion', quantity: 2, skillNotes: [{ skill: 'Athletik', note: 'Steady hands', numericalBonus: 1 }] }
+        ]
+      }
+    };
+
+    setupCharacterCreationFeature(showMessage, (s) => String(s));
+    document.getElementById('characterCreationFeature').click();
+
+    const panel = document.getElementById('characterCreationPanel');
+    panel.querySelector('[data-char-field="Name"]').value = 'Aria Inventory Safe';
+    document.getElementById('createCharacterBtn').click();
+
+    expect(window._importedCharacter.Allgemein.Name).toBe('Aria Inventory Safe');
+    expect(window._importedCharacter.inventory.items).toEqual([
+      { name: 'Rope', quantity: 1 },
+      { name: 'Potion', quantity: 2, skillNotes: [{ skill: 'Athletik', note: 'Steady hands', numericalBonus: 1 }] }
+    ]);
+  });
 });

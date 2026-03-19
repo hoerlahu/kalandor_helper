@@ -109,6 +109,9 @@ export function setupImportExportFeature(showMessage, escapeHtml) {
                 }
 
                 window._importedCharacter = data;
+                window.dispatchEvent(new CustomEvent('character-data-changed', {
+                    detail: { source: 'import-export-feature', mode: 'import' }
+                }));
             } catch (error) {
                 showMessage(`Error parsing JSON: ${escapeHtml(error.message || String(error))}`, true);
             }
