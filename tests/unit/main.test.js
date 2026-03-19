@@ -3,10 +3,10 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
 // Prevent the four feature modules from attaching DOM listeners during main.js evaluation.
-vi.mock('../../whatToRollFeature.js', () => ({ setupWhatToRollFeature: vi.fn() }));
-vi.mock('../../importExportFeature.js', () => ({ setupImportExportFeature: vi.fn() }));
-vi.mock('../../inventoryFeature.js', () => ({ setupInventoryFeature: vi.fn() }));
-vi.mock('../../characterCreationFeature.js', () => ({ setupCharacterCreationFeature: vi.fn() }));
+vi.mock('../../src/features/whatToRollFeature.js', () => ({ setupWhatToRollFeature: vi.fn() }));
+vi.mock('../../src/features/importExportFeature.js', () => ({ setupImportExportFeature: vi.fn() }));
+vi.mock('../../src/features/inventoryFeature.js', () => ({ setupInventoryFeature: vi.fn() }));
+vi.mock('../../src/features/characterCreationFeature.js', () => ({ setupCharacterCreationFeature: vi.fn() }));
 
 // Minimal DOM matching the structure defined in index.html.
 const SHELL_HTML = `
@@ -32,7 +32,7 @@ const flushPromises = () => new Promise((r) => setTimeout(r, 0));
 // Re-evaluates main.js from scratch each call (vi.resetModules() clears the cache).
 async function importMain() {
   vi.resetModules();
-  return import('../../main.js');
+  return import('../../src/main.js');
 }
 
 // ---------------------------------------------------------------------------
@@ -70,7 +70,7 @@ describe('index.html – page structure', () => {
 
   it('loads main.js as an ES module', () => {
     expect(html).toContain('type="module"');
-    expect(html).toContain('src="main.js"');
+    expect(html).toContain('src="src/main.js"');
   });
 });
 

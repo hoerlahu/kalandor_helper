@@ -1,7 +1,7 @@
-import { setupWhatToRollFeature } from './whatToRollFeature.js';
-import { setupImportExportFeature } from './importExportFeature.js';
-import { setupInventoryFeature } from './inventoryFeature.js';
-import { setupCharacterCreationFeature } from './characterCreationFeature.js';
+import { setupWhatToRollFeature } from './features/whatToRollFeature.js';
+import { setupImportExportFeature } from './features/importExportFeature.js';
+import { setupInventoryFeature } from './features/inventoryFeature.js';
+import { setupCharacterCreationFeature } from './features/characterCreationFeature.js';
 
 const DEBUG_FLAG_KEY = 'kalandor_debugMode';
 window._config = {};
@@ -54,7 +54,6 @@ function loadConfig() {
             window._config = { ...window._config, ...data };
         })
         .catch(() => {
-            // Fallback to default in-memory config if config.json is unavailable.
         });
 }
 

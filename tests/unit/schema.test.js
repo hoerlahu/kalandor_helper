@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { setupCharacterCreationFeature } from '../../characterCreationFeature.js';
+import { setupCharacterCreationFeature } from '../../src/features/characterCreationFeature.js';
 import path from 'node:path';
 import Ajv from 'ajv';
 

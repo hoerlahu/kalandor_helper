@@ -60,7 +60,7 @@ function collectNestedKeys(obj, options, prefix = '', depth = 1) {
 function buildItemHtml(item, escapeHtml) {
     const skillNotesHtml = item.skillNotes && item.skillNotes.length
         ? `<div class="muted">${item.skillNotes
-            .map((s) => `<div class="skill-chip">${escapeHtml(s.skill)}${s.note ? ` - ${escapeHtml(s.note)}` : ''}${s.numericalBonus !== undefined ? ` <em>(${s.numericalBonus >= 0 ? '+' : ''}${escapeHtml(String(s.numericalBonus))})</em>` : ''}</div>`)
+            .map((skillNote) => `<div class="skill-chip">${escapeHtml(skillNote.skill)}${skillNote.note ? ` - ${escapeHtml(skillNote.note)}` : ''}${skillNote.numericalBonus !== undefined ? ` <em>(${skillNote.numericalBonus >= 0 ? '+' : ''}${escapeHtml(String(skillNote.numericalBonus))})</em>` : ''}</div>`)
             .join('')}</div>`
         : '';
 

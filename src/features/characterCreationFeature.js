@@ -220,7 +220,7 @@ function panelMarkup(escapeHtml) {
 
 	const skillsMarkup = Object.keys(AUSBILDUNG_SKILLS).map((category) => {
 		const inputs = AUSBILDUNG_SKILLS[category].map((skill, skillIndex) => {
-			return `<label class="cc-label">${escapeHtml(skill)}<input id="skill-${escapeHtml(category)}-${skillIndex}" class="cc-input" type="number" value="0" /></label>`;
+			return `<label class="cc-label">${escapeHtml(skill)}<input id="skill-${escapeHtml(category)}-${skillIndex}" data-skill-category="${escapeHtml(category)}" data-skill-name="${escapeHtml(skill)}" class="cc-input" type="number" value="0" /></label>`;
 		}).join('');
 
 		return `<h4>${escapeHtml(category)}</h4><div class="character-creation-grid">${inputs}</div>`;

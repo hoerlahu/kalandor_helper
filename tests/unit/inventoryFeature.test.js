@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { setupInventoryFeature } from '../../inventoryFeature.js';
+import { setupInventoryFeature } from '../../src/features/inventoryFeature.js';
 
 describe('setupInventoryFeature', () => {
   beforeEach(() => {
