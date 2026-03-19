@@ -48,16 +48,26 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                     }
 
                     if (noteObj.note) {
-                        const bonusPart = typeof noteObj.numericalBonus === 'number'
+                        const hasNumericalBonus = typeof noteObj.numericalBonus === 'number';
+                        const bonusPart = hasNumericalBonus
                             ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + ')</strong>'
                             : '';
-                        const noteColor = isNoteEnabled ? '' : 'color:#aaa;';
-                        itemNoteElements.push(
-                            '<label style="cursor:pointer;display:block;' + noteColor + '">' +
-                            '<input class="roll-skill-note-toggle" data-note-key="' + noteKey + '" type="checkbox" ' + (isNoteEnabled ? 'checked' : '') + ' style="margin-right:6px;" />' +
-                            escapeHtml(noteObj.note) + bonusPart +
-                            '</label>'
-                        );
+                        
+                        if (hasNumericalBonus) {
+                            const noteColor = isNoteEnabled ? '' : 'color:#aaa;';
+                            itemNoteElements.push(
+                                '<label style="cursor:pointer;display:block;' + noteColor + '">' +
+                                '<input class="roll-skill-note-toggle" data-note-key="' + noteKey + '" type="checkbox" ' + (isNoteEnabled ? 'checked' : '') + ' style="margin-right:6px;" />' +
+                                escapeHtml(noteObj.note) + bonusPart +
+                                '</label>'
+                            );
+                        } else {
+                            itemNoteElements.push(
+                                '<div style="display:block;margin-bottom:6px;">' +
+                                escapeHtml(noteObj.note) +
+                                '</div>'
+                            );
+                        }
                     }
                 });
             }

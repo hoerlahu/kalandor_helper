@@ -464,4 +464,45 @@ describe('setupWhatToRollFeature', () => {
     resultHtml = document.getElementById('rollResult').innerHTML;
     expect(resultHtml).toContain('Item-Boni: +0');
   });
+
+  it('only shows checkboxes for skill notes with numerical bonuses', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70 },
+        Punkte: { Beweglichkeit: 3 }
+      },
+      inventory: {
+        items: [
+          {
+            name: 'Mixed Gear',
+            skillNotes: [
+              { skill: 'Athletik', note: 'This is just flavor text', numericalBonus: undefined },
+              { skill: 'Athletik', note: 'This has a bonus', numericalBonus: 2 },
+              { skill: 'Athletik', note: 'Another flavor note' }
+            ]
+          }
+        ]
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+    selectRollPath('Ausbildung > Korperlich > Athletik');
+
+    const resultHtml = document.getElementById('rollResult').innerHTML;
+    expect(resultHtml).toContain('This is just flavor text');
+    expect(resultHtml).toContain('This has a bonus');
+    expect(resultHtml).toContain('Another flavor note');
+    expect(resultHtml).toContain('Item-Boni: +2');
+
+    const checkboxes = document.querySelectorAll('#rollResult .roll-skill-note-toggle');
+    expect(checkboxes.length).toBe(1);
+  });
 });
