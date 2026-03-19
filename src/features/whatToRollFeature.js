@@ -21,11 +21,11 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         return 0;
     }
 
-    function collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledItemIndexes) {
+    function collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledSkillNotes) {
         let notesHtml = '';
         let itemBonusTotal = 0;
 
-        const items = window._importedCharacter?.inventory?.items;
+        const items = window._importedCharacter && window._importedCharacter.inventory && window._importedCharacter.inventory.items;
         if (!selectedSkill || !Array.isArray(items)) {
             return { notesHtml, itemBonusTotal };
         }
@@ -33,15 +33,17 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const foundNotes = [];
 
         items.forEach((item, itemIndex) => {
-            const applyNumericalBonus = !enabledItemIndexes || enabledItemIndexes.has(itemIndex);
-            const matchedNotes = [];
+            const itemNoteElements = [];
 
             if (Array.isArray(item.skillNotes)) {
-                item.skillNotes.forEach((noteObj) => {
+                item.skillNotes.forEach((noteObj, noteIndex) => {
+                    const noteKey = itemIndex + '-' + noteIndex;
+                    const isNoteEnabled = enabledSkillNotes && enabledSkillNotes.has(noteKey);
+                    
                     const matchesSkill = noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3;
                     if (!matchesSkill) return;
 
-                    if (applyNumericalBonus && typeof noteObj.numericalBonus === 'number') {
+                    if (isNoteEnabled && typeof noteObj.numericalBonus === 'number') {
                         itemBonusTotal += noteObj.numericalBonus;
                     }
 
@@ -49,21 +51,23 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                         const bonusPart = typeof noteObj.numericalBonus === 'number'
                             ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + ')</strong>'
                             : '';
-                        matchedNotes.push(escapeHtml(noteObj.note) + bonusPart);
+                        const noteColor = isNoteEnabled ? '' : 'color:#aaa;';
+                        itemNoteElements.push(
+                            '<label style="cursor:pointer;display:block;' + noteColor + '">' +
+                            '<input class="roll-skill-note-toggle" data-note-key="' + noteKey + '" type="checkbox" ' + (isNoteEnabled ? 'checked' : '') + ' style="margin-right:6px;" />' +
+                            escapeHtml(noteObj.note) + bonusPart +
+                            '</label>'
+                        );
                     }
                 });
             }
 
-            if (!matchedNotes.length) return;
+            if (!itemNoteElements.length) return;
 
-            const itemColor = applyNumericalBonus ? '' : 'color:#aaa;';
             foundNotes.push(
-                '<div class="muted" style="margin-top:4px;' + itemColor + '">' +
-                '<label style="cursor:pointer;' + itemColor + '">' +
-                '<input class="roll-item-toggle" data-item-index="' + itemIndex + '" type="checkbox" ' + (applyNumericalBonus ? 'checked' : '') + ' style="margin-right:6px;" />' +
+                '<div class="muted" style="margin-top:8px;border-left:2px solid #999;padding-left:8px;">' +
                 '<strong>' + escapeHtml(item.name || ('Item ' + (itemIndex + 1))) + '</strong>' +
-                '</label>' +
-                '<div style="margin-left:16px;' + itemColor + '">' + matchedNotes.join('<br>') + '</div>' +
+                '<div style="margin-top:4px;">' + itemNoteElements.join('') + '</div>' +
                 '</div>'
             );
         });
@@ -75,7 +79,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         return { notesHtml, itemBonusTotal };
     }
 
-    function buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledItemIndexes) {
+    function buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledSkillNotes) {
         const skillValue = computeSkillValue(level1, level2, level3, level4, rollConfig);
         const basiswertMultiplier = typeof rollConfig.BasiswertMultiplier === 'number' ? rollConfig.BasiswertMultiplier : 1;
         const basiswert = window._importedCharacter.Attribute.Basiswert[base];
@@ -83,9 +87,9 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const zehnerStelleMultiplikator = rollConfig['10erStelleMultiplikator'] ? rollConfig['10erStelleMultiplikator'] : 0;
         const basisWertPunkte = window._importedCharacter.Attribute.Punkte[base] || 0;
         const basisWertPunkteMultiplikator = rollConfig.BasisWertPunkteMultiplikator || 0;
-        const { notesHtml, itemBonusTotal } = collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledItemIndexes);
+        const itemNotes = collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledSkillNotes);
 
-        const overallValue = (basiswert * basiswertMultiplier) + skillValue + (zehnerStelle * zehnerStelleMultiplikator) + (basisWertPunkte * basisWertPunkteMultiplikator) + itemBonusTotal;
+        const overallValue = (basiswert * basiswertMultiplier) + skillValue + (zehnerStelle * zehnerStelleMultiplikator) + (basisWertPunkte * basisWertPunkteMultiplikator) + itemNotes.itemBonusTotal;
 
         return {
             base,
@@ -95,14 +99,14 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                 '10s Place Attributes: ' + (rollConfig['10erStelle'] ? (zehnerStelle * zehnerStelleMultiplikator) : 'No') + '<br>' +
                 'BasiswertPunkte: ' + (basisWertPunkte * basisWertPunkteMultiplikator) + '<br>' +
                 'Skillpunkte: ' + skillValue + '<br>' +
-                'Item-Boni: ' + (itemBonusTotal >= 0 ? '+' : '') + itemBonusTotal + '<br>' +
+                'Item-Boni: ' + (itemNotes.itemBonusTotal >= 0 ? '+' : '') + itemNotes.itemBonusTotal + '<br>' +
                 '<br>' +
                 'Grundwert: ' + overallValue + '<br>' +
                 '<br>' +
                 'Roll20: <code>/r 1d100-' + overallValue + '</code>' +
                 ' <button type="button" class="btn-secondary" style="padding:2px 8px;font-size:0.85em;" onclick="navigator.clipboard.writeText(\'/r 1d100-' + overallValue + '\')">Copy</button><br>' +
                 '<br>' +
-                'Items: ' + (notesHtml ? notesHtml : 'None') + '<br>' +
+                'Items: ' + (itemNotes.notesHtml ? itemNotes.notesHtml : 'None') + '<br>' +
                 '</div>'
         };
     }
@@ -125,7 +129,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             '</div>';
     }
 
-    function displayRollInfo(level1, level2, level3, level4, enabledItemIndexes, preferredBase) {
+    function displayRollInfo(level1, level2, level3, level4, enabledSkillNotes, preferredBase) {
         if (!level1) return 'No roll selected';
 
         const selectedSkill = level4 || level3 || level2;
@@ -138,7 +142,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         }
 
         const baseEntries = rollConfig.BasisWert.map((base) =>
-            buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledItemIndexes)
+            buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledSkillNotes)
         );
 
         if (!baseEntries.length) {
@@ -148,29 +152,29 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         return buildBasiswertView(baseEntries, preferredBase);
     }
 
-    function createPanelMarkup() {
-        let html = '<div style="padding:12px;border-radius:6px;background:#f1f8ff;border:1px solid #cfe6ff;">';
-        html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">';
-        html += '<h3 style="margin:0;">What do I roll?</h3>';
-        html += '<button id="rollSelectorClose" type="button" class="btn-secondary">Close</button>';
-        html += '</div>';
-        html += '<label style="display:block;margin-bottom:10px;" id="childLabel"><strong>Property:</strong></label>';
-        html += '<select id="childSelect" style="padding:8px;margin-bottom:15px;display:none;">';
-        html += '</select>';
-        html += '<label style="display:block;margin-bottom:10px;" id="grandchildLabel"><strong>Sub-property:</strong></label>';
-        html += '<select id="grandchildSelect" style="padding:8px;margin-bottom:15px;display:none;">';
-        html += '</select>';
-        html += '<label style="display:block;margin-bottom:10px;" id="greatgrandchildLabel"><strong>Sub-sub-property:</strong></label>';
-        html += '<select id="greatgrandchildSelect" style="padding:8px;margin-bottom:15px;display:none;">';
-        html += '</select>';
-        html += '<div id="rollResult" style="margin-top:15px;font-weight:bold;"></div>';
-        html += '</div>';
-        return html;
+    function collectTerminalPaths(value, currentPath, output) {
+        if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+            const nestedKeys = Object.keys(value);
+            if (!nestedKeys.length && currentPath) {
+                output.push(currentPath);
+                return;
+            }
+            nestedKeys.forEach((key) => {
+                const nextPath = currentPath ? currentPath + ' > ' + key : key;
+                collectTerminalPaths(value[key], nextPath, output);
+            });
+            return;
+        }
+
+        if (currentPath) {
+            output.push(currentPath);
+        }
     }
 
-    function getChildKeys(parentData) {
+    function getRollPathOptions(parentData) {
         const childKeys = Object.keys(parentData);
         const generalSkills = [];
+
         if (window._config) {
             if (Array.isArray(window._config.generalSkills)) {
                 generalSkills.push(...window._config.generalSkills);
@@ -183,13 +187,41 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             });
         }
 
+        const paths = [];
+        childKeys.forEach((key) => {
+            collectTerminalPaths(parentData[key], key, paths);
+        });
+
         generalSkills.forEach((skill) => {
-            if (!childKeys.includes(skill)) {
-                childKeys.push(skill);
+            if (!paths.includes(skill)) {
+                paths.push(skill);
             }
         });
 
-        return { childKeys, generalSkills };
+        return paths;
+    }
+
+    function parseRollPath(path) {
+        const parts = path.split('>').map((part) => part.trim()).filter(Boolean);
+        return {
+            level2: parts[0],
+            level3: parts[1],
+            level4: parts[2]
+        };
+    }
+
+    function createPanelMarkup() {
+        let html = '<div style="padding:12px;border-radius:6px;background:#f1f8ff;border:1px solid #cfe6ff;">';
+        html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">';
+        html += '<h3 style="margin:0;">What do I roll?</h3>';
+        html += '<button id="rollSelectorClose" type="button" class="btn-secondary">Close</button>';
+        html += '</div>';
+        html += '<label style="display:block;margin-bottom:10px;" for="rollSearchInput"><strong>Roll:</strong></label>';
+        html += '<input id="rollSearchInput" type="text" list="rollSearchList" autocomplete="off" placeholder="Type to search a roll..." style="padding:8px;margin-bottom:15px;width:100%;" />';
+        html += '<datalist id="rollSearchList"></datalist>';
+        html += '<div id="rollResult" style="margin-top:15px;font-weight:bold;"></div>';
+        html += '</div>';
+        return html;
     }
 
     whatToRollFeature.addEventListener('click', () => {
@@ -198,10 +230,9 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             return;
         }
 
-        const supportedRoll = 'Skills';
+        const selectedParent = 'Skills';
         const rollSelector = document.getElementById('rollSelector');
         const charData = window._importedCharacter;
-        const selectedParent = supportedRoll;
 
         rollSelector.innerHTML = createPanelMarkup();
         rollSelector.style.display = 'block';
@@ -209,51 +240,64 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const importResult = document.getElementById('importResult');
         importResult.style.display = 'none';
 
-        const childSelect = document.getElementById('childSelect');
-        const childLabel = document.getElementById('childLabel');
-        const grandchildSelect = document.getElementById('grandchildSelect');
-        const grandchildLabel = document.getElementById('grandchildLabel');
-        const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
-        const greatgrandchildLabel = document.getElementById('greatgrandchildLabel');
+        const rollSearchInput = document.getElementById('rollSearchInput');
+        const rollSearchList = document.getElementById('rollSearchList');
         const rollResult = document.getElementById('rollResult');
         const rollSelectorClose = document.getElementById('rollSelectorClose');
-        const enabledItemIndexes = new Set(
-            charData && charData.inventory && Array.isArray(charData.inventory.items)
-                ? charData.inventory.items.map((_, index) => index)
-                : []
-        );
+        
+        // Initialize enabled skill notes - start with all skill notes enabled
+        const enabledSkillNotes = new Set();
+        const items = charData && charData.inventory && Array.isArray(charData.inventory.items) ? charData.inventory.items : [];
+        items.forEach((item, itemIndex) => {
+            if (Array.isArray(item.skillNotes)) {
+                item.skillNotes.forEach((_, noteIndex) => {
+                    enabledSkillNotes.add(itemIndex + '-' + noteIndex);
+                });
+            }
+        });
 
         function renderRollHtml(nextHtml) {
             rollResult.innerHTML = nextHtml;
         }
 
+        const parentData = charData[selectedParent] || {};
+        const rollPathOptions = getRollPathOptions(parentData);
+        const rollPathSet = new Set(rollPathOptions);
+
+        rollSearchList.innerHTML = '';
+        rollPathOptions.forEach((pathValue) => {
+            rollSearchList.innerHTML += '<option value="' + escapeHtml(pathValue) + '"></option>';
+        });
+
         function updateRollResult(preferredBase) {
-            const selectedChild = childSelect.value;
-            const selectedGrandchild = grandchildSelect.value;
-            const selectedGreatgrandchild = greatgrandchildSelect.value;
+            const selectedPath = rollSearchInput.value.trim();
             const currentBase = preferredBase || (rollResult.querySelector('#basiswertSelect') ? rollResult.querySelector('#basiswertSelect').value : '');
 
-            if (!selectedChild) {
+            if (!selectedPath || !rollPathSet.has(selectedPath)) {
                 renderRollHtml('');
                 return;
             }
 
-            if (selectedGreatgrandchild) {
-                renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, selectedGreatgrandchild, enabledItemIndexes, currentBase) + '</strong>');
+            const levels = parseRollPath(selectedPath);
+            const level2Value = levels.level2 ? parentData[levels.level2] : undefined;
+            const level3Value = levels.level2 && levels.level3 && level2Value ? level2Value[levels.level3] : undefined;
+
+            if (levels.level4) {
+                renderRollHtml('<strong>' + displayRollInfo(selectedParent, levels.level2, levels.level3, levels.level4, enabledSkillNotes, currentBase) + '</strong>');
                 return;
             }
 
-            if (selectedGrandchild) {
-                const grandchildValue = charData[selectedParent][selectedChild][selectedGrandchild];
-                if (typeof grandchildValue !== 'object' || grandchildValue === null || Array.isArray(grandchildValue)) {
-                    renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, selectedGrandchild, undefined, enabledItemIndexes, currentBase) + '</strong>');
+            if (levels.level3) {
+                if (typeof level3Value !== 'object' || level3Value === null || Array.isArray(level3Value)) {
+                    renderRollHtml('<strong>' + displayRollInfo(selectedParent, levels.level2, levels.level3, undefined, enabledSkillNotes, currentBase) + '</strong>');
                     return;
                 }
+                renderRollHtml('');
+                return;
             }
 
-            const childValue = charData[selectedParent][selectedChild];
-            if (typeof childValue !== 'object' || childValue === null || Array.isArray(childValue)) {
-                renderRollHtml('<strong>' + displayRollInfo(selectedParent, selectedChild, undefined, undefined, enabledItemIndexes, currentBase) + '</strong>');
+            if (typeof level2Value !== 'object' || level2Value === null || Array.isArray(level2Value)) {
+                renderRollHtml('<strong>' + displayRollInfo(selectedParent, levels.level2, undefined, undefined, enabledSkillNotes, currentBase) + '</strong>');
                 return;
             }
 
@@ -266,121 +310,32 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             importResult.style.display = '';
         });
 
+        rollSearchInput.addEventListener('input', () => {
+            updateRollResult();
+        });
+
+        rollSearchInput.addEventListener('change', () => {
+            updateRollResult();
+        });
+
         rollResult.addEventListener('change', (event) => {
             const target = event.target;
             if (target instanceof HTMLSelectElement && target.id === 'basiswertSelect') {
                 updateRollResult(target.value);
                 return;
             }
-            if (!(target instanceof HTMLInputElement) || !target.classList.contains('roll-item-toggle')) return;
+            if (!(target instanceof HTMLInputElement) || !target.classList.contains('roll-skill-note-toggle')) return;
 
             const currentBase = rollResult.querySelector('#basiswertSelect') ? rollResult.querySelector('#basiswertSelect').value : '';
-            const itemIndex = Number(target.getAttribute('data-item-index'));
-            if (!Number.isInteger(itemIndex)) return;
+            const noteKey = target.getAttribute('data-note-key');
+            if (!noteKey) return;
 
             if (target.checked) {
-                enabledItemIndexes.add(itemIndex);
+                enabledSkillNotes.add(noteKey);
             } else {
-                enabledItemIndexes.delete(itemIndex);
+                enabledSkillNotes.delete(noteKey);
             }
             updateRollResult(currentBase);
         }, true);
-
-        if (!selectedParent) {
-            childSelect.style.display = 'none';
-            childLabel.style.display = 'none';
-            grandchildSelect.style.display = 'none';
-            grandchildLabel.style.display = 'none';
-            greatgrandchildSelect.style.display = 'none';
-            greatgrandchildLabel.style.display = 'none';
-            return;
-        }
-
-        const parentData = charData[selectedParent];
-        const { childKeys, generalSkills } = getChildKeys(parentData);
-
-        childSelect.innerHTML = '<option value="">Select a property...</option>';
-        childKeys.forEach((key) => {
-            let displayText = escapeHtml(key);
-            let value = parentData[key];
-            if (generalSkills.includes(key) && (value === undefined || value === null)) {
-                value = 0;
-            }
-            if (typeof value !== 'object' || value === null) {
-                displayText += ': ' + escapeHtml(String(value));
-            } else {
-                displayText += ' (Object)';
-            }
-            childSelect.innerHTML += '<option value="' + escapeHtml(key) + '">' + displayText + '</option>';
-        });
-
-        childSelect.style.display = 'block';
-        childLabel.style.display = 'block';
-
-        childSelect.addEventListener('change', () => {
-            const selectedChild = childSelect.value;
-            renderRollHtml('');
-
-            if (!selectedChild) {
-                grandchildSelect.style.display = 'none';
-                grandchildLabel.style.display = 'none';
-                greatgrandchildSelect.style.display = 'none';
-                greatgrandchildLabel.style.display = 'none';
-                return;
-            }
-
-            const value = charData[selectedParent][selectedChild];
-            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                const grandchildKeys = Object.keys(value);
-                grandchildSelect.innerHTML = '<option value="">Select a sub-property...</option>';
-                grandchildKeys.forEach((key) => {
-                    grandchildSelect.innerHTML += '<option value="' + escapeHtml(key) + '">' + escapeHtml(key) + ': ' + escapeHtml(String(value[key])) + '</option>';
-                });
-
-                grandchildSelect.style.display = 'block';
-                grandchildLabel.style.display = 'block';
-            } else {
-                updateRollResult();
-                grandchildSelect.style.display = 'none';
-                grandchildLabel.style.display = 'none';
-            }
-        });
-
-        grandchildSelect.addEventListener('change', () => {
-            const selectedGrandchild = grandchildSelect.value;
-            renderRollHtml('');
-
-            if (!selectedGrandchild) {
-                greatgrandchildSelect.style.display = 'none';
-                greatgrandchildLabel.style.display = 'none';
-                return;
-            }
-
-            const value = charData[selectedParent][childSelect.value][selectedGrandchild];
-            if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
-                const greatgrandchildKeys = Object.keys(value);
-
-                greatgrandchildSelect.innerHTML = '<option value="">Select a sub-sub-property...</option>';
-                greatgrandchildKeys.forEach((key) => {
-                    greatgrandchildSelect.innerHTML += '<option value="' + escapeHtml(key) + '">' + escapeHtml(key) + ': ' + escapeHtml(String(value[key])) + '</option>';
-                });
-
-                greatgrandchildSelect.style.display = 'block';
-                greatgrandchildLabel.style.display = 'block';
-            } else {
-                updateRollResult();
-                greatgrandchildSelect.style.display = 'none';
-                greatgrandchildLabel.style.display = 'none';
-            }
-        });
-
-        greatgrandchildSelect.addEventListener('change', () => {
-            const selectedGreatgrandchild = greatgrandchildSelect.value;
-            if (!selectedGreatgrandchild) {
-                renderRollHtml('');
-                return;
-            }
-            updateRollResult();
-        });
     });
 }

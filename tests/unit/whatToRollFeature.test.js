@@ -1,18 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { setupWhatToRollFeature } from '../../src/features/whatToRollFeature.js';
 
-function selectAthletikRoll() {
-  const childSelect = document.getElementById('childSelect');
-  childSelect.value = 'Ausbildung';
-  childSelect.dispatchEvent(new Event('change'));
-
-  const grandchildSelect = document.getElementById('grandchildSelect');
-  grandchildSelect.value = 'Korperlich';
-  grandchildSelect.dispatchEvent(new Event('change'));
-
-  const greatgrandchildSelect = document.getElementById('greatgrandchildSelect');
-  greatgrandchildSelect.value = 'Athletik';
-  greatgrandchildSelect.dispatchEvent(new Event('change'));
+function selectRollPath(pathValue) {
+  const rollSearchInput = document.getElementById('rollSearchInput');
+  rollSearchInput.value = pathValue;
+  rollSearchInput.dispatchEvent(new Event('input'));
 }
 
 describe('setupWhatToRollFeature', () => {
@@ -49,7 +41,7 @@ describe('setupWhatToRollFeature', () => {
     );
   });
 
-  it('renders roll info for a leaf skill selection', () => {
+  it('renders roll info for a leaf roll path selection', () => {
     window._importedCharacter = {
       Skills: {
         Ausbildung: {
@@ -69,13 +61,13 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-    selectAthletikRoll();
+    selectRollPath('Ausbildung > Korperlich > Athletik');
 
     expect(document.getElementById('rollResult').innerHTML).toContain('Grundwert');
     expect(document.getElementById('basiswertSelect')).not.toBeNull();
   });
 
-  it('includes config general skills in first dropdown even when missing on character', () => {
+  it('includes config general skills in type-ahead options even when missing on character', () => {
     window._config = {
       __DEFAULT__: {
         BasisWert: ['Beweglichkeit'],
@@ -107,10 +99,35 @@ describe('setupWhatToRollFeature', () => {
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
 
-    const childSelect = document.getElementById('childSelect');
-    const optionValues = Array.from(childSelect.options).map((o) => o.value);
-
+    const optionValues = Array.from(document.querySelectorAll('#rollSearchList option')).map((o) => o.value);
     expect(optionValues).toContain('Absorbtion');
+  });
+
+  it('renders a type-ahead input for roll selection', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70 },
+        Punkte: { Beweglichkeit: 3 }
+      },
+      inventory: {
+        items: []
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+
+    const rollSearchInput = document.getElementById('rollSearchInput');
+    expect(rollSearchInput).not.toBeNull();
+    expect(rollSearchInput.getAttribute('list')).toBe('rollSearchList');
+    expect(document.getElementById('rollSearchList')).not.toBeNull();
   });
 
   it('renders a close button in the roll selector panel', () => {
@@ -194,7 +211,7 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-    selectAthletikRoll();
+    selectRollPath('Ausbildung > Korperlich > Athletik');
 
     const basiswertSelect = document.getElementById('basiswertSelect');
     expect(basiswertSelect).not.toBeNull();
@@ -234,7 +251,7 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-    selectAthletikRoll();
+    selectRollPath('Ausbildung > Korperlich > Athletik');
 
     const basiswertSelect = document.getElementById('basiswertSelect');
     basiswertSelect.value = 'Willenskraft';
@@ -270,13 +287,13 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-    selectAthletikRoll();
+    selectRollPath('Ausbildung > Korperlich > Athletik');
 
     expect(document.getElementById('rollResult').innerHTML).toContain('Grip Gloves');
     expect(document.getElementById('rollResult').innerHTML).toContain('Add traction bonus');
   });
 
-  it('renders a checkbox for each inventory item in the what-to-roll panel', () => {
+  it('renders a checkbox for each skill note in the what-to-roll panel', () => {
     window._importedCharacter = {
       Skills: {
         Ausbildung: {
@@ -292,20 +309,20 @@ describe('setupWhatToRollFeature', () => {
       inventory: {
         items: [
           { name: 'Grip Gloves', skillNotes: [{ skill: 'Athletik', note: 'Grip +', numericalBonus: 1 }] },
-          { name: 'Lucky Charm', skillNotes: [{ skill: 'Athletik', note: 'Luck +', numericalBonus: 2 }] }
+          { name: 'Lucky Charm', skillNotes: [{ skill: 'Athletik', note: 'Luck +', numericalBonus: 2 }, { skill: 'Athletik', note: 'Extra Luck', numericalBonus: 1 }] }
         ]
       }
     };
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-    selectAthletikRoll();
+    selectRollPath('Ausbildung > Korperlich > Athletik');
 
-    const checkboxes = document.querySelectorAll('#rollResult .roll-item-toggle');
-    expect(checkboxes.length).toBe(2);
+    const checkboxes = document.querySelectorAll('#rollResult .roll-skill-note-toggle');
+    expect(checkboxes.length).toBe(3);
   });
 
-  it('uses what-to-roll checkbox state to include or ignore numerical item bonus', () => {
+  it('uses what-to-roll checkbox state to include or ignore numerical skill note bonus', () => {
     window._importedCharacter = {
       Skills: {
         Ausbildung: {
@@ -330,14 +347,14 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-    selectAthletikRoll();
+    selectRollPath('Ausbildung > Korperlich > Athletik');
 
     let resultHtml = document.getElementById('rollResult').innerHTML;
     expect(resultHtml).toContain('Item-Boni: +10');
 
-    const itemToggle = document.querySelector('#rollResult .roll-item-toggle');
-    itemToggle.checked = false;
-    itemToggle.dispatchEvent(new Event('change'));
+    const skillNoteToggle = document.querySelector('#rollResult .roll-skill-note-toggle');
+    skillNoteToggle.checked = false;
+    skillNoteToggle.dispatchEvent(new Event('change'));
 
     resultHtml = document.getElementById('rollResult').innerHTML;
     expect(resultHtml).toContain('Item-Boni: +0');
@@ -345,7 +362,7 @@ describe('setupWhatToRollFeature', () => {
     expect(window._importedCharacter.inventory.items[0].applyNumericalModifier).toBeUndefined();
   });
 
-  it('keeps the selected Basiswert when item checkbox is toggled', () => {
+  it('keeps the selected Basiswert when skill note checkbox is toggled', () => {
     window._config = {
       __DEFAULT__: {
         BasisWert: ['Beweglichkeit', 'Willenskraft'],
@@ -380,19 +397,71 @@ describe('setupWhatToRollFeature', () => {
 
     setupWhatToRollFeature(showMessage, (s) => String(s));
     document.getElementById('whatToRollFeature').click();
-    selectAthletikRoll();
+    selectRollPath('Ausbildung > Korperlich > Athletik');
 
     const basiswertSelect = document.getElementById('basiswertSelect');
     basiswertSelect.value = 'Willenskraft';
     basiswertSelect.dispatchEvent(new Event('change'));
 
-    const itemToggle = document.querySelector('#rollResult .roll-item-toggle');
-    itemToggle.checked = false;
-    itemToggle.dispatchEvent(new Event('change'));
+    const skillNoteToggle = document.querySelector('#rollResult .roll-skill-note-toggle');
+    skillNoteToggle.checked = false;
+    skillNoteToggle.dispatchEvent(new Event('change'));
 
     const basiswertSelectAfter = document.getElementById('basiswertSelect');
     expect(basiswertSelectAfter).not.toBeNull();
     expect(basiswertSelectAfter.value).toBe('Willenskraft');
     expect(document.querySelector('#basiswertInfo').getAttribute('data-roll-base')).toBe('Willenskraft');
+  });
+
+  it('toggles individual skill notes independently', () => {
+    window._importedCharacter = {
+      Skills: {
+        Ausbildung: {
+          Korperlich: {
+            Athletik: 2
+          }
+        }
+      },
+      Attribute: {
+        Basiswert: { Beweglichkeit: 70 },
+        Punkte: { Beweglichkeit: 3 }
+      },
+      inventory: {
+        items: [
+          {
+            name: 'Magic Boots',
+            skillNotes: [
+              { skill: 'Athletik', note: 'Enhanced Speed', numericalBonus: 5 },
+              { skill: 'Athletik', note: 'Better Grip', numericalBonus: 3 }
+            ]
+          }
+        ]
+      }
+    };
+
+    setupWhatToRollFeature(showMessage, (s) => String(s));
+    document.getElementById('whatToRollFeature').click();
+    selectRollPath('Ausbildung > Korperlich > Athletik');
+
+    let resultHtml = document.getElementById('rollResult').innerHTML;
+    expect(resultHtml).toContain('Item-Boni: +8');
+
+    const checkboxes = document.querySelectorAll('#rollResult .roll-skill-note-toggle');
+    expect(checkboxes.length).toBe(2);
+
+    // Uncheck the first skill note (Enhanced Speed - bonus 5)
+    checkboxes[0].checked = false;
+    checkboxes[0].dispatchEvent(new Event('change'));
+
+    resultHtml = document.getElementById('rollResult').innerHTML;
+    expect(resultHtml).toContain('Item-Boni: +3');
+
+    // Uncheck the second skill note (Better Grip - bonus 3)
+    const checkboxesAfter = document.querySelectorAll('#rollResult .roll-skill-note-toggle');
+    checkboxesAfter[1].checked = false;
+    checkboxesAfter[1].dispatchEvent(new Event('change'));
+
+    resultHtml = document.getElementById('rollResult').innerHTML;
+    expect(resultHtml).toContain('Item-Boni: +0');
   });
 });

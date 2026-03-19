@@ -11,5 +11,5 @@ test('imports character JSON and opens roll UI', async ({ page }) => {
 
   await page.locator('#whatToRollFeature').click();
   await expect(page.locator('#rollSelector')).toBeVisible();
-  await expect(page.locator('#childSelect')).toBeVisible();
+  await expect(page.locator('#rollSearchInput')).toBeVisible();
 });
