@@ -95,6 +95,18 @@
         }
       },
       "required": ["items"]
+    },
+    "rollFavorites": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": { "type": "string" },
+          "preferredBase": { "type": "string" }
+        },
+        "required": ["path"]
+      },
+      "description": "Saved favorite roll paths with selected base attribute"
     }
   },
   "required": ["Allgemein", "Attribute", "Skills", "inventory"]

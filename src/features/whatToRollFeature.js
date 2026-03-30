@@ -21,7 +21,8 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         return 0;
     }
 
-    function collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledSkillNotes) {
+    function collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledSkillNotes, showCheckboxes) {
+        const showCb = showCheckboxes !== false;
         let notesHtml = '';
         let itemBonusTotal = 0;
 
@@ -38,7 +39,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             if (Array.isArray(item.skillNotes)) {
                 item.skillNotes.forEach((noteObj, noteIndex) => {
                     const noteKey = itemIndex + '-' + noteIndex;
-                    const isNoteEnabled = enabledSkillNotes && enabledSkillNotes.has(noteKey);
+                    const isNoteEnabled = !showCb || (enabledSkillNotes && enabledSkillNotes.has(noteKey));
                     
                     const matchesSkill = noteObj.skill === selectedSkill || noteObj.skill === base || noteObj.skill === level2 || noteObj.skill === level3;
                     if (!matchesSkill) return;
@@ -53,7 +54,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                             ? ' <strong>(' + (noteObj.numericalBonus >= 0 ? '+' : '') + noteObj.numericalBonus + ')</strong>'
                             : '';
                         
-                        if (hasNumericalBonus) {
+                        if (hasNumericalBonus && showCb) {
                             const noteColor = isNoteEnabled ? '' : 'color:#aaa;';
                             itemNoteElements.push(
                                 '<label style="cursor:pointer;display:block;' + noteColor + '">' +
@@ -64,7 +65,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
                         } else {
                             itemNoteElements.push(
                                 '<div style="display:block;margin-bottom:6px;">' +
-                                escapeHtml(noteObj.note) +
+                                escapeHtml(noteObj.note) + bonusPart +
                                 '</div>'
                             );
                         }
@@ -89,7 +90,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         return { notesHtml, itemBonusTotal };
     }
 
-    function buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledSkillNotes) {
+    function buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledSkillNotes, idSuffix, showCheckboxes) {
         const skillValue = computeSkillValue(level1, level2, level3, level4, rollConfig);
         const basiswertMultiplier = typeof rollConfig.BasiswertMultiplier === 'number' ? rollConfig.BasiswertMultiplier : 1;
         const basiswert = window._importedCharacter.Attribute.Basiswert[base];
@@ -97,13 +98,14 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const zehnerStelleMultiplikator = rollConfig['10erStelleMultiplikator'] ? rollConfig['10erStelleMultiplikator'] : 0;
         const basisWertPunkte = window._importedCharacter.Attribute.Punkte[base] || 0;
         const basisWertPunkteMultiplikator = rollConfig.BasisWertPunkteMultiplikator || 0;
-        const itemNotes = collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledSkillNotes);
+        const itemNotes = collectItemNotesAndBonus(selectedSkill, base, level2, level3, enabledSkillNotes, showCheckboxes);
 
         const overallValue = (basiswert * basiswertMultiplier) + skillValue + (zehnerStelle * zehnerStelleMultiplikator) + (basisWertPunkte * basisWertPunkteMultiplikator) + itemNotes.itemBonusTotal;
+        const divId = idSuffix == null ? ' id="basiswertInfo"' : '';
 
         return {
             base,
-            content: '<div id="basiswertInfo" data-roll-base="' + escapeHtml(base) + '" style="margin-top:8px;">' +
+            content: '<div' + divId + ' data-roll-base="' + escapeHtml(base) + '" style="margin-top:8px;">' +
                 'Basiswert: ' + basiswert + '<br>' +
                 'BasiswertMultiplier: ' + basiswertMultiplier + '<br>' +
                 '10s Place Attributes: ' + (rollConfig['10erStelle'] ? (zehnerStelle * zehnerStelleMultiplikator) : 'No') + '<br>' +
@@ -121,7 +123,7 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         };
     }
 
-    function buildBasiswertView(baseEntries, preferredBase) {
+    function buildBasiswertView(baseEntries, preferredBase, idSuffix) {
         if (!baseEntries.length) return '';
 
         const activeBase = baseEntries.some((entry) => entry.base === preferredBase)
@@ -132,14 +134,20 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             .map((entry) => '<option value="' + escapeHtml(entry.base) + '"' + (entry.base === activeBase ? ' selected' : '') + '>' + escapeHtml(entry.base) + '</option>')
             .join('');
 
+        const isFav = idSuffix != null;
+        const selectAttrs = isFav
+            ? 'class="roll-fav-basiswert-select" data-fav-index="' + idSuffix + '"'
+            : 'id="basiswertSelect"';
+        const labelFor = isFav ? '' : ' for="basiswertSelect"';
+
         return '<div style="margin-top:8px;">' +
-            '<label for="basiswertSelect" style="display:block;margin-bottom:8px;"><strong>Basiswert:</strong></label>' +
-            '<select id="basiswertSelect" style="padding:8px;margin-bottom:12px;">' + basiswertOptions + '</select>' +
+            '<label' + labelFor + ' style="display:block;margin-bottom:8px;"><strong>Basiswert:</strong></label>' +
+            '<select ' + selectAttrs + ' style="padding:8px;margin-bottom:12px;">' + basiswertOptions + '</select>' +
             activeEntry.content +
             '</div>';
     }
 
-    function displayRollInfo(level1, level2, level3, level4, enabledSkillNotes, preferredBase) {
+    function displayRollInfo(level1, level2, level3, level4, enabledSkillNotes, preferredBase, idSuffix, showCheckboxes) {
         if (!level1) return 'No roll selected';
 
         const selectedSkill = level4 || level3 || level2;
@@ -152,14 +160,14 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         }
 
         const baseEntries = rollConfig.BasisWert.map((base) =>
-            buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledSkillNotes)
+            buildBaseEntry(base, rollConfig, level1, level2, level3, level4, selectedSkill, enabledSkillNotes, idSuffix, showCheckboxes)
         );
 
         if (!baseEntries.length) {
             return 'No configuration found for roll: ' + rollKey;
         }
 
-        return buildBasiswertView(baseEntries, preferredBase);
+        return buildBasiswertView(baseEntries, preferredBase, idSuffix);
     }
 
     function collectTerminalPaths(value, currentPath, output) {
@@ -221,17 +229,53 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
     }
 
     function createPanelMarkup() {
-        let html = '<div style="padding:12px;border-radius:6px;background:#f1f8ff;border:1px solid #cfe6ff;">';
+        let html = '<div id="rollSelectorInner" style="padding:12px;border-radius:6px;background:#f1f8ff;border:1px solid #cfe6ff;">';
         html += '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">';
         html += '<h3 style="margin:0;">What do I roll?</h3>';
         html += '<button id="rollSelectorClose" type="button" class="btn-secondary">Close</button>';
         html += '</div>';
+        html += '<div id="rollFavoritesPanel" style="margin:16px 0;padding:0 0 12px 0;border-bottom:1px solid #cfe6ff;">';
+        html += '<button id="rollFavoritesToggle" type="button" class="btn-secondary" aria-expanded="false" style="margin-bottom:8px;">Show Favorites</button>';
+        html += '<div id="rollFavoritesContent" style="display:none;">';
+        html += '<strong>Favorites</strong>';
+        html += '<div id="rollFavoritesList"></div>';
+        html += '</div>';
+        html += '</div>';
         html += '<label style="display:block;margin-bottom:10px;" for="rollSearchInput"><strong>Roll:</strong></label>';
         html += '<input id="rollSearchInput" type="text" list="rollSearchList" autocomplete="off" placeholder="Type to search a roll..." style="padding:8px;margin-bottom:15px;width:100%;" />';
         html += '<datalist id="rollSearchList"></datalist>';
+        html += '<div id="rollFavoriteToggleRow" style="display:none;margin-bottom:8px;">';
+        html += '<button id="rollFavoriteBtn" type="button" class="btn-secondary">\u2606 Add to Favorites</button>';
+        html += '</div>';
         html += '<div id="rollResult" style="margin-top:15px;font-weight:bold;"></div>';
         html += '</div>';
         return html;
+    }
+
+    function getFavorites() {
+        if (!window._importedCharacter) return [];
+        if (!Array.isArray(window._importedCharacter.rollFavorites)) {
+            window._importedCharacter.rollFavorites = [];
+        }
+        return window._importedCharacter.rollFavorites;
+    }
+
+    function findFavoriteIndex(path) {
+        return getFavorites().findIndex((f) => f.path === path);
+    }
+
+    function isFavorite(path) {
+        return findFavoriteIndex(path) !== -1;
+    }
+
+    function toggleFavorite(path) {
+        const favorites = getFavorites();
+        const index = findFavoriteIndex(path);
+        if (index === -1) {
+            favorites.push({ path });
+        } else {
+            favorites.splice(index, 1);
+        }
     }
 
     whatToRollFeature.addEventListener('click', () => {
@@ -254,6 +298,8 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
         const rollSearchList = document.getElementById('rollSearchList');
         const rollResult = document.getElementById('rollResult');
         const rollSelectorClose = document.getElementById('rollSelectorClose');
+        const rollFavoritesToggle = document.getElementById('rollFavoritesToggle');
+        const rollFavoritesContent = document.getElementById('rollFavoritesContent');
         
         // Initialize enabled skill notes - start with all skill notes enabled
         const enabledSkillNotes = new Set();
@@ -268,6 +314,14 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
 
         function renderRollHtml(nextHtml) {
             rollResult.innerHTML = nextHtml;
+            updateFavoriteButton(nextHtml ? rollSearchInput.value.trim() : '');
+        }
+
+        function setFavoritesCollapsed(isCollapsed) {
+            if (!rollFavoritesToggle || !rollFavoritesContent) return;
+            rollFavoritesToggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+            rollFavoritesToggle.textContent = isCollapsed ? 'Show Favorites' : 'Hide Favorites';
+            rollFavoritesContent.style.display = isCollapsed ? 'none' : '';
         }
 
         const parentData = charData[selectedParent] || {};
@@ -328,6 +382,13 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             updateRollResult();
         });
 
+        if (rollFavoritesToggle) {
+            rollFavoritesToggle.addEventListener('click', () => {
+                const isCollapsed = rollFavoritesToggle.getAttribute('aria-expanded') !== 'true';
+                setFavoritesCollapsed(!isCollapsed);
+            });
+        }
+
         rollResult.addEventListener('change', (event) => {
             const target = event.target;
             if (target instanceof HTMLSelectElement && target.id === 'basiswertSelect') {
@@ -347,5 +408,77 @@ export function setupWhatToRollFeature(showMessage, escapeHtml) {
             }
             updateRollResult(currentBase);
         }, true);
+
+        function renderFavoriteSingleHtml(fav, favIndex) {
+            const levels = parseRollPath(fav.path);
+            const rollHtml = displayRollInfo(selectedParent, levels.level2, levels.level3, levels.level4, enabledSkillNotes, fav.preferredBase, favIndex, false);
+            return '<div class="roll-favorite-entry" data-fav-index="' + favIndex + '" style="margin-top:12px;padding:10px;border:1px solid #cfe6ff;border-radius:4px;">' +
+                '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">' +
+                '<strong>' + escapeHtml(fav.path) + '</strong>' +
+                '<button type="button" class="btn-secondary roll-favorite-remove" data-path="' + escapeHtml(fav.path) + '" style="padding:2px 8px;font-size:0.85em;" title="Remove from favorites">\u00d7</button>' +
+                '</div>' +
+                rollHtml +
+                '</div>';
+        }
+
+        function renderFavoritesList() {
+            const rollFavoritesList = document.getElementById('rollFavoritesList');
+            if (!rollFavoritesList) return;
+            const favorites = getFavorites();
+            if (!favorites.length) {
+                rollFavoritesList.innerHTML = '<div style="margin-top:4px;color:#888;">No favorites yet.</div>';
+                return;
+            }
+            rollFavoritesList.innerHTML = favorites.map((fav, i) => renderFavoriteSingleHtml(fav, i)).join('');
+        }
+
+        function updateFavoriteButton(selectedPath) {
+            const rollFavoriteToggleRow = document.getElementById('rollFavoriteToggleRow');
+            const rollFavoriteBtnEl = document.getElementById('rollFavoriteBtn');
+            if (!rollFavoriteToggleRow || !rollFavoriteBtnEl) return;
+            if (!selectedPath || !rollPathSet.has(selectedPath)) {
+                rollFavoriteToggleRow.style.display = 'none';
+                return;
+            }
+            rollFavoriteToggleRow.style.display = '';
+            rollFavoriteBtnEl.textContent = isFavorite(selectedPath) ? '\u2605 Remove from Favorites' : '\u2606 Add to Favorites';
+        }
+
+        document.getElementById('rollFavoriteBtn').addEventListener('click', () => {
+            const selectedPath = rollSearchInput.value.trim();
+            if (!selectedPath || !rollPathSet.has(selectedPath)) return;
+            toggleFavorite(selectedPath);
+            updateFavoriteButton(selectedPath);
+            renderFavoritesList();
+        });
+
+        document.getElementById('rollFavoritesList').addEventListener('change', (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLSelectElement) || !target.classList.contains('roll-fav-basiswert-select')) return;
+            const favIndex = parseInt(target.getAttribute('data-fav-index'), 10);
+            const favorites = getFavorites();
+            if (isNaN(favIndex) || favIndex < 0 || favIndex >= favorites.length) return;
+            favorites[favIndex].preferredBase = target.value;
+            const entryEl = document.querySelector('.roll-favorite-entry[data-fav-index="' + favIndex + '"]');
+            if (entryEl) {
+                entryEl.outerHTML = renderFavoriteSingleHtml(favorites[favIndex], favIndex);
+            }
+        }, true);
+
+        document.getElementById('rollFavoritesList').addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.classList.contains('roll-favorite-remove')) {
+                const path = target.getAttribute('data-path');
+                if (path) {
+                    const idx = findFavoriteIndex(path);
+                    if (idx !== -1) getFavorites().splice(idx, 1);
+                    renderFavoritesList();
+                    updateFavoriteButton(rollSearchInput.value.trim());
+                }
+            }
+        });
+
+        renderFavoritesList();
+        setFavoritesCollapsed(true);
     });
 }

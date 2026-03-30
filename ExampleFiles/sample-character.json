@@ -153,5 +153,9 @@
           ]
 	    }
     ]
-  }
+  },
+  "rollFavorites": [
+    { "path": "Ausbildung > Körperlich > Athletik", "preferredBase": "Beweglichkeit" },
+    { "path": "Ausbildung > Kampf > Äxte", "preferredBase": "Stärke" }
+  ]
 }

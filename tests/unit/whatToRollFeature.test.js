@@ -505,4 +505,258 @@ describe('setupWhatToRollFeature', () => {
     const checkboxes = document.querySelectorAll('#rollResult .roll-skill-note-toggle');
     expect(checkboxes.length).toBe(1);
   });
+
+  describe('Favorites', () => {
+    const baseCharacter = () => ({
+      Skills: { Ausbildung: { Korperlich: { Athletik: 2 } } },
+      Attribute: { Basiswert: { Beweglichkeit: 70 }, Punkte: { Beweglichkeit: 3 } },
+      inventory: { items: [] }
+    });
+
+    it('starts with the favorites panel collapsed', () => {
+      window._importedCharacter = baseCharacter();
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      expect(document.getElementById('rollFavoritesToggle').getAttribute('aria-expanded')).toBe('false');
+      expect(document.getElementById('rollFavoritesContent').style.display).toBe('none');
+    });
+
+    it('expands the favorites panel when the toggle is clicked', () => {
+      window._importedCharacter = { ...baseCharacter(), rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik' }] };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      document.getElementById('rollFavoritesToggle').click();
+
+      expect(document.getElementById('rollFavoritesToggle').getAttribute('aria-expanded')).toBe('true');
+      expect(document.getElementById('rollFavoritesContent').style.display).toBe('');
+      expect(document.getElementById('rollFavoritesList').innerHTML).toContain('Ausbildung > Korperlich > Athletik');
+    });
+
+    it('shows "No favorites yet" when character has no rollFavorites', () => {
+      window._importedCharacter = baseCharacter();
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      expect(document.getElementById('rollFavoritesList').innerHTML).toContain('No favorites yet');
+    });
+
+    it('shows existing favorites with full roll info on panel open', () => {
+      window._importedCharacter = { ...baseCharacter(), rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik' }] };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      const listHtml = document.getElementById('rollFavoritesList').innerHTML;
+      expect(listHtml).toContain('Ausbildung > Korperlich > Athletik');
+      expect(listHtml).toContain('Grundwert');
+    });
+
+    it('hides the favorite toggle row when no roll is selected', () => {
+      window._importedCharacter = baseCharacter();
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      expect(document.getElementById('rollFavoriteToggleRow').style.display).toBe('none');
+    });
+
+    it('shows the favorite toggle row when a valid roll is selected', () => {
+      window._importedCharacter = baseCharacter();
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+      selectRollPath('Ausbildung > Korperlich > Athletik');
+
+      expect(document.getElementById('rollFavoriteToggleRow').style.display).not.toBe('none');
+    });
+
+    it('shows "Add to Favorites" text for a roll not yet favorited', () => {
+      window._importedCharacter = { ...baseCharacter(), rollFavorites: [] };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+      selectRollPath('Ausbildung > Korperlich > Athletik');
+
+      expect(document.getElementById('rollFavoriteBtn').textContent).toContain('Add to Favorites');
+    });
+
+    it('shows "Remove from Favorites" text for an already-favorited roll', () => {
+      window._importedCharacter = { ...baseCharacter(), rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik' }] };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+      selectRollPath('Ausbildung > Korperlich > Athletik');
+
+      expect(document.getElementById('rollFavoriteBtn').textContent).toContain('Remove from Favorites');
+    });
+
+    it('adds roll to character rollFavorites when favorite button is clicked', () => {
+      window._importedCharacter = baseCharacter();
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+      selectRollPath('Ausbildung > Korperlich > Athletik');
+      document.getElementById('rollFavoriteBtn').click();
+
+      expect(window._importedCharacter.rollFavorites.some((f) => f.path === 'Ausbildung > Korperlich > Athletik')).toBe(true);
+    });
+
+    it('removes roll from rollFavorites when favorite button is clicked again', () => {
+      window._importedCharacter = { ...baseCharacter(), rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik' }] };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+      selectRollPath('Ausbildung > Korperlich > Athletik');
+      document.getElementById('rollFavoriteBtn').click();
+
+      expect(window._importedCharacter.rollFavorites.some((f) => f.path === 'Ausbildung > Korperlich > Athletik')).toBe(false);
+    });
+
+    it('updates button text to "Remove from Favorites" after adding', () => {
+      window._importedCharacter = baseCharacter();
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+      selectRollPath('Ausbildung > Korperlich > Athletik');
+      document.getElementById('rollFavoriteBtn').click();
+
+      expect(document.getElementById('rollFavoriteBtn').textContent).toContain('Remove from Favorites');
+    });
+
+    it('updates the favorites list after adding a favorite', () => {
+      window._importedCharacter = baseCharacter();
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+      selectRollPath('Ausbildung > Korperlich > Athletik');
+      document.getElementById('rollFavoriteBtn').click();
+
+      expect(document.getElementById('rollFavoritesList').innerHTML).toContain('Ausbildung > Korperlich > Athletik');
+    });
+
+    it('displays full roll info inline for a favorite', () => {
+      window._importedCharacter = { ...baseCharacter(), rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik', preferredBase: 'Beweglichkeit' }] };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      const listHtml = document.getElementById('rollFavoritesList').innerHTML;
+      expect(listHtml).toContain('Grundwert');
+      expect(listHtml).toContain('Roll20');
+      expect(listHtml).toContain('Basiswert: 70');
+    });
+
+    it('uses preferredBase from character data when rendering a favorite', () => {
+      window._config = {
+        __DEFAULT__: {
+          BasisWert: ['Beweglichkeit', 'Willenskraft'],
+          BasiswertMultiplier: 1,
+          '10erStelleMultiplikator': 0,
+          BasisWertPunkteMultiplikator: 0,
+          WertMultiplikator: 10
+        }
+      };
+      window._importedCharacter = {
+        Skills: { Ausbildung: { Korperlich: { Athletik: 2 } } },
+        Attribute: { Basiswert: { Beweglichkeit: 70, Willenskraft: 55 }, Punkte: { Beweglichkeit: 3, Willenskraft: 1 } },
+        inventory: { items: [] },
+        rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik', preferredBase: 'Willenskraft' }]
+      };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      const listHtml = document.getElementById('rollFavoritesList').innerHTML;
+      expect(listHtml).toContain('Basiswert: 55');
+      expect(listHtml).not.toContain('Basiswert: 70');
+    });
+
+    it('stores preferredBase in character data when Basiswert select in favorites is changed', () => {
+      window._config = {
+        __DEFAULT__: {
+          BasisWert: ['Beweglichkeit', 'Willenskraft'],
+          BasiswertMultiplier: 1,
+          '10erStelleMultiplikator': 0,
+          BasisWertPunkteMultiplikator: 0,
+          WertMultiplikator: 10
+        }
+      };
+      window._importedCharacter = {
+        Skills: { Ausbildung: { Korperlich: { Athletik: 2 } } },
+        Attribute: { Basiswert: { Beweglichkeit: 70, Willenskraft: 55 }, Punkte: { Beweglichkeit: 3, Willenskraft: 1 } },
+        inventory: { items: [] },
+        rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik' }]
+      };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      const favSelect = document.querySelector('.roll-fav-basiswert-select');
+      favSelect.value = 'Willenskraft';
+      favSelect.dispatchEvent(new Event('change'));
+
+      expect(window._importedCharacter.rollFavorites[0].preferredBase).toBe('Willenskraft');
+    });
+
+    it('re-renders favorite with new Basiswert details after select change', () => {
+      window._config = {
+        __DEFAULT__: {
+          BasisWert: ['Beweglichkeit', 'Willenskraft'],
+          BasiswertMultiplier: 1,
+          '10erStelleMultiplikator': 0,
+          BasisWertPunkteMultiplikator: 0,
+          WertMultiplikator: 10
+        }
+      };
+      window._importedCharacter = {
+        Skills: { Ausbildung: { Korperlich: { Athletik: 2 } } },
+        Attribute: { Basiswert: { Beweglichkeit: 70, Willenskraft: 55 }, Punkte: { Beweglichkeit: 3, Willenskraft: 1 } },
+        inventory: { items: [] },
+        rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik', preferredBase: 'Beweglichkeit' }]
+      };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      const favSelect = document.querySelector('.roll-fav-basiswert-select');
+      favSelect.value = 'Willenskraft';
+      favSelect.dispatchEvent(new Event('change'));
+
+      expect(document.getElementById('rollFavoritesList').innerHTML).toContain('Basiswert: 55');
+      expect(document.getElementById('rollFavoritesList').innerHTML).not.toContain('Basiswert: 70');
+    });
+
+    it('shows item bonus totals in favorites without checkboxes', () => {
+      window._importedCharacter = {
+        Skills: { Ausbildung: { Korperlich: { Athletik: 2 } } },
+        Attribute: { Basiswert: { Beweglichkeit: 70 }, Punkte: { Beweglichkeit: 3 } },
+        inventory: { items: [{ name: 'Grip Gloves', skillNotes: [{ skill: 'Athletik', note: 'Traction', numericalBonus: 5 }] }] },
+        rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik' }]
+      };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      const listHtml = document.getElementById('rollFavoritesList').innerHTML;
+      expect(listHtml).toContain('Item-Boni: +5');
+      expect(listHtml).not.toContain('roll-skill-note-toggle');
+    });
+
+    it('removes a favorite when the remove button is clicked', () => {
+      window._importedCharacter = { ...baseCharacter(), rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik' }] };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+
+      document.querySelector('.roll-favorite-remove').click();
+
+      expect(window._importedCharacter.rollFavorites.some((f) => f.path === 'Ausbildung > Korperlich > Athletik')).toBe(false);
+      expect(document.getElementById('rollFavoritesList').innerHTML).toContain('No favorites yet');
+    });
+
+    it('updates favorite button to "Add to Favorites" after removing the currently selected roll', () => {
+      window._importedCharacter = { ...baseCharacter(), rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik' }] };
+      setupWhatToRollFeature(showMessage, (s) => String(s));
+      document.getElementById('whatToRollFeature').click();
+      selectRollPath('Ausbildung > Korperlich > Athletik');
+
+      document.querySelector('.roll-favorite-remove').click();
+
+      expect(document.getElementById('rollFavoriteBtn').textContent).toContain('Add to Favorites');
+    });
+
+    it('rollFavorites objects are included when character is exported', () => {
+      window._importedCharacter = { ...baseCharacter(), rollFavorites: [{ path: 'Ausbildung > Korperlich > Athletik', preferredBase: 'Beweglichkeit' }] };
+      const json = JSON.stringify(window._importedCharacter);
+      const parsed = JSON.parse(json);
+      expect(parsed.rollFavorites).toEqual([{ path: 'Ausbildung > Korperlich > Athletik', preferredBase: 'Beweglichkeit' }]);
+    });
+  });
 });
